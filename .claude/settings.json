@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(which node *)",
+      "Read(//usr/local/bin/**)",
+      "Bash(ls /usr/local/bin/ | grep -E 'node|npm' ; ls /opt/homebrew/bin/ | grep -E 'node|npm' 2>/dev/null)",
+      "Read(//opt/homebrew/**)",
+      "Bash(find /usr /opt /home /Users/weexcel -name \"node\" -type f 2>/dev/null | head -10)",
+      "Read(//usr/**)",
+      "Bash(ls /opt/pmk/env/global/bin/ 2>/dev/null | head -20)",
+      "Read(//opt/pmk/env/global/**)",
+      "Bash(ls -la /opt/pmk/ 2>/dev/null)",
+      "Read(//opt/**)",
+      "Bash(brew --version)"
+    ]
+  }
+}
