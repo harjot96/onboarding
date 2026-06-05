@@ -5,6 +5,7 @@ import { useState } from "react";
 
 const nav = [
   { href: "/onboarding", label: "Project Onboarding", icon: "🏆", group: "CRM" },
+  { href: "/project-types", label: "Project Type Guide", icon: "🗂", group: "CRM" },
   { href: "/", label: "Dashboard", icon: "⊞", group: "Project" },
   { href: "/scope", label: "Scope & Backlog", icon: "📋", group: "Project" },
   { href: "/board", label: "Task Board", icon: "🗂", group: "Project" },

@@ -343,9 +343,9 @@ export default function OnboardingPage() {
         <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">Project Name</label>
-              <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-                value={project.name} onChange={(e) => setProject((p) => ({ ...p, name: e.target.value }))} />
+              <label className="text-xs text-slate-400 font-medium block mb-1">Project Name <span className="text-green-600">(CRM)</span></label>
+              <input readOnly className="w-full border border-slate-100 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-600 font-medium"
+                value={project.name} />
             </div>
             <div>
               <label className="text-xs text-slate-400 font-medium block mb-1">Project ID <span className="text-indigo-500">(auto)</span></label>
@@ -353,39 +353,35 @@ export default function OnboardingPage() {
                 value={project.id} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">Project Type</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-                value={project.type} onChange={(e) => setProject((p) => ({ ...p, type: e.target.value }))}>
-                {PROJECT_TYPES.map((t) => <option key={t}>{t}</option>)}
-              </select>
+              <label className="text-xs text-slate-400 font-medium block mb-1">Project Type <span className="text-green-600">(CRM)</span></label>
+              <input readOnly className="w-full border border-slate-100 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-600"
+                value={project.type} />
             </div>
           </div>
           <div className="grid grid-cols-4 gap-4">
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">Currency</label>
-              <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-                value={project.currency} onChange={(e) => setProject((p) => ({ ...p, currency: e.target.value }))}>
-                {CURRENCIES.map((c) => <option key={c}>{c}</option>)}
-              </select>
+              <label className="text-xs text-slate-400 font-medium block mb-1">Currency <span className="text-green-600">(CRM)</span></label>
+              <input readOnly className="w-full border border-slate-100 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-600"
+                value={project.currency} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">Project Budget</label>
+              <label className="text-xs text-slate-700 font-semibold block mb-1">Project Cost <span className="text-slate-500 font-normal">(Inclusive of taxes, if any)</span></label>
               <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none"
                 value={project.budget} onChange={(e) => setProject((p) => ({ ...p, budget: Number(e.target.value) }))} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">Start Date</label>
-              <input type="date" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-                value={project.startDate} onChange={(e) => setProject((p) => ({ ...p, startDate: e.target.value }))} />
+              <label className="text-xs text-slate-400 font-medium block mb-1">Start Date <span className="text-green-600">(CRM)</span></label>
+              <input readOnly type="date" className="w-full border border-slate-100 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-600"
+                value={project.startDate} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 font-medium block mb-1">End Date</label>
-              <input type="date" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none"
-                value={project.endDate} onChange={(e) => setProject((p) => ({ ...p, endDate: e.target.value }))} />
+              <label className="text-xs text-slate-400 font-medium block mb-1">End Date <span className="text-green-600">(CRM)</span></label>
+              <input readOnly type="date" className="w-full border border-slate-100 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-600"
+                value={project.endDate} />
             </div>
           </div>
           <div>
-            <label className="text-xs text-slate-400 font-medium block mb-1">Project Description / Scope Summary</label>
+            <label className="text-xs text-slate-700 font-semibold block mb-1">Project Description / Scope Summary <span className="text-green-600 font-normal">(CRM · editable)</span></label>
             <textarea rows={3} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-300 focus:outline-none"
               value={project.description} onChange={(e) => setProject((p) => ({ ...p, description: e.target.value }))} />
           </div>
