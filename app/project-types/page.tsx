@@ -12,6 +12,10 @@ type ProjectModel = {
   phases: string[]; bestFor: string
 }
 
+type EditablePhase = {
+  id: string; label: string; startDate: string; endDate: string; hoursPerMonth: number; comment: string
+}
+
 const FLEXIBILITY_COLOR: Record<string, string> = {
   "Very High": "bg-emerald-100 text-emerald-700",
   High: "bg-green-100 text-green-700",
@@ -51,6 +55,21 @@ const MODELS: ProjectModel[] = [
     ],
     phases: ["Kickoff", "Sprint 1", "Sprint 2", "Sprint N", "Closure"],
     bestFor: "Evolving scope where client wants control over backlog",
+  },
+  {
+    id: "fixed", name: "Fixed Price", icon: "📋", workflow: "Agile / Sprint-based",
+    flexibility: "Low", billing: "Fixed fee + tax",
+    color: "bg-indigo-50", borderColor: "border-indigo-300", headerColor: "bg-indigo-600", pillColor: "bg-indigo-100 text-indigo-700",
+    description: "Agreed scope, fixed cost, fixed timeline. Vendor absorbs cost overruns. Best for well-defined projects.",
+    keyFields: [
+      { label: "Fixed Project Cost", example: "₹20,00,000" },
+      { label: "Tax Rate", example: "18% GST" },
+      { label: "Total Billable Amount", example: "Auto-calculated" },
+      { label: "Payment Terms", example: "Net 30 on milestone sign-off" },
+      { label: "Change Request Policy", example: "Signed CR required" },
+    ],
+    phases: ["Discovery & Design", "Development Sprint 1", "Development Sprint 2", "UAT & Testing", "Go Live"],
+    bestFor: "Well-defined scope with clear deliverables and fixed budget",
   },
   {
     id: "dedicated", name: "Dedicated Team", icon: "👥", workflow: "Agile ongoing",
@@ -94,7 +113,7 @@ const MODELS: ProjectModel[] = [
       { label: "Effective Resources", example: "0.5 = 50% available" },
       { label: "Minimum Commitment", example: "3 months" },
     ],
-    phases: [],
+    phases: ["Onboarding", "Month 1", "Month 2", "Month 3"],
     bestFor: "Filling specific skill gaps within an existing client team",
   },
   {
@@ -128,22 +147,72 @@ const MODELS: ProjectModel[] = [
   },
 ]
 
-// ── SaaS billing state ───────────────────────────────────────────────────────
 const SAAS_PLANS = [
   { type: "Starter", ratePerUser: 599 },
   { type: "Growth", ratePerUser: 999 },
   { type: "Enterprise", ratePerUser: 1499 },
 ]
 
-// ── Dedicated Team resource state ────────────────────────────────────────────
 const AVAIL_OPTS = [100, 75, 50, 25]
 type DResource = { id: string; name: string; role: string; monthlyRate: number; availability: number }
-
-// ── Staff Aug resource state ─────────────────────────────────────────────────
 type SAResource = { id: string; tech: string; resourcesRequired: number; availability: number; monthlyRate: number }
-
-// ── Milestone billing state ──────────────────────────────────────────────────
 type MSItem = { id: string; name: string; pct: number; dueDate: string; status: string }
+
+const DEFAULT_PHASES: Record<string, EditablePhase[]> = {
+  saas: [
+    { id: "sp1", label: "Discovery", startDate: "2026-06-01", endDate: "2026-06-15", hoursPerMonth: 80, comment: "" },
+    { id: "sp2", label: "Sprint Loop", startDate: "2026-06-16", endDate: "2026-08-31", hoursPerMonth: 160, comment: "" },
+    { id: "sp3", label: "Release", startDate: "2026-09-01", endDate: "2026-09-15", hoursPerMonth: 80, comment: "" },
+    { id: "sp4", label: "Monitor", startDate: "2026-09-16", endDate: "2026-10-15", hoursPerMonth: 40, comment: "" },
+    { id: "sp5", label: "Iterate", startDate: "2026-10-16", endDate: "2026-12-31", hoursPerMonth: 160, comment: "" },
+  ],
+  tm: [
+    { id: "tp1", label: "Kickoff", startDate: "2026-06-01", endDate: "2026-06-07", hoursPerMonth: 40, comment: "" },
+    { id: "tp2", label: "Sprint 1", startDate: "2026-06-08", endDate: "2026-06-21", hoursPerMonth: 160, comment: "" },
+    { id: "tp3", label: "Sprint 2", startDate: "2026-06-22", endDate: "2026-07-05", hoursPerMonth: 160, comment: "" },
+    { id: "tp4", label: "Sprint N", startDate: "2026-07-06", endDate: "2026-09-30", hoursPerMonth: 160, comment: "" },
+    { id: "tp5", label: "Closure", startDate: "2026-10-01", endDate: "2026-10-15", hoursPerMonth: 40, comment: "" },
+  ],
+  fixed: [
+    { id: "fp1", label: "Discovery & Design", startDate: "2026-06-01", endDate: "2026-06-30", hoursPerMonth: 120, comment: "" },
+    { id: "fp2", label: "Development Sprint 1", startDate: "2026-07-01", endDate: "2026-07-31", hoursPerMonth: 160, comment: "" },
+    { id: "fp3", label: "Development Sprint 2", startDate: "2026-08-01", endDate: "2026-08-31", hoursPerMonth: 160, comment: "" },
+    { id: "fp4", label: "UAT & Testing", startDate: "2026-09-01", endDate: "2026-09-20", hoursPerMonth: 100, comment: "" },
+    { id: "fp5", label: "Go Live", startDate: "2026-09-21", endDate: "2026-09-30", hoursPerMonth: 40, comment: "" },
+  ],
+  dedicated: [
+    { id: "dp1", label: "Onboarding", startDate: "2026-06-01", endDate: "2026-06-30", hoursPerMonth: 80, comment: "" },
+    { id: "dp2", label: "Month 1", startDate: "2026-07-01", endDate: "2026-07-31", hoursPerMonth: 160, comment: "" },
+    { id: "dp3", label: "Month 2", startDate: "2026-08-01", endDate: "2026-08-31", hoursPerMonth: 160, comment: "" },
+    { id: "dp4", label: "Month N", startDate: "2026-09-01", endDate: "2027-05-31", hoursPerMonth: 160, comment: "" },
+    { id: "dp5", label: "Renewal / Exit", startDate: "2027-06-01", endDate: "2027-06-30", hoursPerMonth: 40, comment: "" },
+  ],
+  bot: [
+    { id: "bp1", label: "Build", startDate: "2026-06-01", endDate: "2026-11-30", hoursPerMonth: 200, comment: "" },
+    { id: "bp2", label: "Operate", startDate: "2026-12-01", endDate: "2027-11-30", hoursPerMonth: 160, comment: "" },
+    { id: "bp3", label: "Transfer", startDate: "2027-12-01", endDate: "2028-05-31", hoursPerMonth: 120, comment: "" },
+  ],
+  staffaug: [
+    { id: "sap1", label: "Onboarding", startDate: "2026-06-01", endDate: "2026-06-14", hoursPerMonth: 40, comment: "" },
+    { id: "sap2", label: "Month 1", startDate: "2026-06-15", endDate: "2026-07-15", hoursPerMonth: 160, comment: "" },
+    { id: "sap3", label: "Month 2", startDate: "2026-07-16", endDate: "2026-08-15", hoursPerMonth: 160, comment: "" },
+    { id: "sap4", label: "Month 3", startDate: "2026-08-16", endDate: "2026-09-15", hoursPerMonth: 160, comment: "" },
+  ],
+  outcome: [
+    { id: "op1", label: "Goal Setting", startDate: "2026-06-01", endDate: "2026-06-14", hoursPerMonth: 40, comment: "" },
+    { id: "op2", label: "Baseline", startDate: "2026-06-15", endDate: "2026-06-30", hoursPerMonth: 60, comment: "" },
+    { id: "op3", label: "Execution", startDate: "2026-07-01", endDate: "2026-10-31", hoursPerMonth: 160, comment: "" },
+    { id: "op4", label: "KPI Review", startDate: "2026-11-01", endDate: "2026-11-15", hoursPerMonth: 60, comment: "" },
+    { id: "op5", label: "Payout", startDate: "2026-11-16", endDate: "2026-11-30", hoursPerMonth: 40, comment: "" },
+  ],
+  milestone: [
+    { id: "mlp1", label: "M1: Kickoff", startDate: "2026-06-01", endDate: "2026-06-05", hoursPerMonth: 20, comment: "" },
+    { id: "mlp2", label: "M2: Requirements", startDate: "2026-06-06", endDate: "2026-06-20", hoursPerMonth: 80, comment: "" },
+    { id: "mlp3", label: "M3: MVP", startDate: "2026-06-21", endDate: "2026-08-15", hoursPerMonth: 160, comment: "" },
+    { id: "mlp4", label: "M4: UAT", startDate: "2026-08-16", endDate: "2026-09-10", hoursPerMonth: 120, comment: "" },
+    { id: "mlp5", label: "M5: Go Live", startDate: "2026-09-11", endDate: "2026-09-30", hoursPerMonth: 80, comment: "" },
+  ],
+}
 
 export default function ProjectTypesPage() {
   const [selected, setSelected] = useState<ProjectModel>(MODELS[0])
@@ -166,6 +235,12 @@ export default function ProjectTypesPage() {
   const [tmDuration, setTmDuration] = useState(4)
   const tmMonthly = tmResources.reduce((s, r) => s + r.hourlyRate * r.hoursPerMonth, 0)
   const tmTotal = tmMonthly * tmDuration
+
+  // ── Fixed Price state
+  const [fixedCost, setFixedCost] = useState(2000000)
+  const [fixedTaxPct, setFixedTaxPct] = useState(18)
+  const fixedTax = fixedCost * fixedTaxPct / 100
+  const fixedGrandTotal = fixedCost + fixedTax
 
   // ── Dedicated Team state
   const [dedicatedResources, setDedicatedResources] = useState<DResource[]>([
@@ -205,9 +280,10 @@ export default function ProjectTypesPage() {
 
   // ── Outcome state
   const [outcome, setOutcome] = useState({ baseFee: 300000, bonusPct: 20, penaltyPct: 10, duration: 6 })
+  const [includeBonus, setIncludeBonus] = useState(true)
   const outcomeBase = outcome.baseFee * outcome.duration
   const outcomeBonus = outcomeBase * (outcome.bonusPct / 100)
-  const outcomeTotal = outcomeBase + outcomeBonus
+  const outcomeTotal = includeBonus ? outcomeBase + outcomeBonus : outcomeBase
 
   // ── Milestone state
   const [msProjectCost, setMsProjectCost] = useState(1850000)
@@ -222,15 +298,23 @@ export default function ProjectTypesPage() {
   const [editMs, setEditMs] = useState<MSItem | null>(null)
   const totalMsPct = milestones.reduce((s, m) => s + m.pct, 0)
 
+  // ── Phase Timeline state
+  const [includePhases, setIncludePhases] = useState<Record<string, boolean>>({
+    saas: false, tm: false, fixed: false, dedicated: false, bot: true, staffaug: false, outcome: false, milestone: true,
+  })
+  const [editablePhases, setEditablePhases] = useState<Record<string, EditablePhase[]>>(DEFAULT_PHASES)
+  const [showAddPhase, setShowAddPhase] = useState(false)
+  const [newPhase, setNewPhase] = useState({ label: "", startDate: "", endDate: "", hoursPerMonth: 0, comment: "" })
+
   function handleSelect(id: string) {
     const m = MODELS.find(m => m.id === id)
-    if (m) { setSelected(m); setTab("fields") }
+    if (m) { setSelected(m); setTab("fields"); setShowAddPhase(false) }
   }
 
-  // compute total project cost per model
   function getTotal() {
     if (selected.id === "saas") return saasTotal
     if (selected.id === "tm") return tmTotal
+    if (selected.id === "fixed") return fixedGrandTotal
     if (selected.id === "dedicated") return dedicatedTotal
     if (selected.id === "bot") return botTotal
     if (selected.id === "staffaug") return saTotal
@@ -239,7 +323,27 @@ export default function ProjectTypesPage() {
     return 0
   }
 
-  const hasPhasesTab = selected.id !== "staffaug"
+  const currentPhases = editablePhases[selected.id] ?? []
+  const currentInclude = includePhases[selected.id] ?? false
+
+  function addPhase() {
+    if (!newPhase.label.trim()) return
+    const id = `ph-${selected.id}-${currentPhases.length + 1}`
+    setEditablePhases(prev => ({ ...prev, [selected.id]: [...(prev[selected.id] ?? []), { ...newPhase, id }] }))
+    setNewPhase({ label: "", startDate: "", endDate: "", hoursPerMonth: 0, comment: "" })
+    setShowAddPhase(false)
+  }
+
+  function removePhase(phId: string) {
+    setEditablePhases(prev => ({ ...prev, [selected.id]: (prev[selected.id] ?? []).filter(p => p.id !== phId) }))
+  }
+
+  function updatePhase(phId: string, field: keyof EditablePhase, value: string | number) {
+    setEditablePhases(prev => ({
+      ...prev,
+      [selected.id]: (prev[selected.id] ?? []).map(p => p.id === phId ? { ...p, [field]: value } : p),
+    }))
+  }
 
   return (
     <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
@@ -267,7 +371,6 @@ export default function ProjectTypesPage() {
             </select>
           </div>
         </div>
-        {/* stats strip */}
         <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-slate-200">
           {[
             { label: "Workflow", value: selected.workflow },
@@ -308,12 +411,12 @@ export default function ProjectTypesPage() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {/* Tabs */}
         <div className="flex border-b border-slate-100">
-          {(["fields", "billing", ...(hasPhasesTab ? ["phases"] : [])] as const).map(t => (
-            <button key={t} onClick={() => setTab(t as typeof tab)}
+          {(["fields", "billing", "phases"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
               className={`px-6 py-3.5 text-sm font-medium transition-colors ${
                 tab === t ? "border-b-2 border-indigo-600 text-indigo-600 bg-indigo-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
               }`}>
-              {t === "fields" ? "Key Onboarding Fields" : t === "billing" ? "Billing Configuration" : "Phase Timeline"}
+              {t === "fields" ? "Key Onboarding Fields" : t === "billing" ? "Billing Configuration" : "Project Milestone Timeline"}
             </button>
           ))}
           <div className="ml-auto flex items-center px-4 gap-3">
@@ -361,7 +464,6 @@ export default function ProjectTypesPage() {
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{selected.name} — Required fields</p>
                 </div>
 
-                {/* BOT — editable required fields */}
                 {selected.id === "bot" ? (
                   <div className="space-y-3">
                     <div>
@@ -386,9 +488,16 @@ export default function ProjectTypesPage() {
                         className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-300 focus:outline-none bg-orange-50" />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-700 font-semibold block mb-1">Transition Plan</label>
-                      <textarea rows={2} value={botFields.transitionPlan} onChange={e => setBotFields(f => ({ ...f, transitionPlan: e.target.value }))}
-                        className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-orange-300 focus:outline-none bg-orange-50" />
+                      <label className="text-xs text-slate-700 font-semibold block mb-1">
+                        Transition Plan <span className="text-slate-400 font-normal">(up to 3000 words)</span>
+                      </label>
+                      <textarea rows={8} value={botFields.transitionPlan}
+                        onChange={e => setBotFields(f => ({ ...f, transitionPlan: e.target.value }))}
+                        placeholder="Describe the knowledge transfer plan, team handover process, runbook delivery, and client training..."
+                        className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm resize-y focus:ring-2 focus:ring-orange-300 focus:outline-none bg-orange-50" />
+                      <p className="text-xs text-slate-400 mt-1 text-right">
+                        {botFields.transitionPlan.split(/\s+/).filter(Boolean).length} / 3000 words
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -417,7 +526,7 @@ export default function ProjectTypesPage() {
         {tab === "billing" && (
           <div className="p-6 space-y-5">
 
-            {/* ── SaaS ─────────────────────────────────────── */}
+            {/* ── SaaS */}
             {selected.id === "saas" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -455,7 +564,7 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── T&M ─────────────────────────────────────── */}
+            {/* ── T&M */}
             {selected.id === "tm" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -504,7 +613,55 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── Dedicated Team ───────────────────────────── */}
+            {/* ── Fixed Price */}
+            {selected.id === "fixed" && (
+              <>
+                <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
+                  📋 Fixed Price — Cost & Tax Breakdown
+                </div>
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-slate-700 font-semibold block mb-1">Fixed Project Cost (₹)</label>
+                      <input type="number" value={fixedCost} onChange={e => setFixedCost(Math.max(0, Number(e.target.value)))}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-700 font-semibold block mb-2">Tax Rate</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[0, 5, 12, 18, 28].map(t => (
+                          <button key={t} onClick={() => setFixedTaxPct(t)}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-all ${
+                              fixedTaxPct === t ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300"
+                            }`}>
+                            {t}%{t === 18 ? " (GST)" : t === 0 ? " (Exempt)" : ""}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`rounded-xl border-2 ${selected.borderColor} ${selected.color} p-5 flex flex-col justify-center space-y-4`}>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Billing Summary</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Base Project Cost</span>
+                        <span className="font-semibold text-slate-700">{fmt(fixedCost)}</span>
+                      </div>
+                      <div className="flex justify-between text-indigo-600">
+                        <span>+ Tax ({fixedTaxPct}%)</span>
+                        <span className="font-semibold">+{fmt(fixedTax)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-slate-200 pt-2 text-indigo-700">
+                        <span className="font-bold">Total Billable Amount</span>
+                        <span className="font-bold text-lg">{fmt(fixedGrandTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Dedicated Team */}
             {selected.id === "dedicated" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -574,7 +731,7 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── BOT ──────────────────────────────────────── */}
+            {/* ── BOT */}
             {selected.id === "bot" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -628,16 +785,16 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── Staff Augmentation ──────────────────────── */}
+            {/* ── Staff Augmentation */}
             {selected.id === "staffaug" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
-                  ➕ Staff Augmentation — Resource Calculator
+                  ➕ Staff Augmentation — Skill Set Breakdown
                 </div>
                 <table className="w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
                   <thead className="bg-slate-50">
                     <tr>
-                      {["Technology Stack", "Resources Required", "Availability", "Effective Resources", "Monthly Rate (₹)", "Monthly Cost"].map(h => (
+                      {["Technology Stack", "No. of Resources", "Availability", "Effective Resources", "Monthly Rate (₹)", "Monthly Cost"].map(h => (
                         <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-slate-500">{h}</th>
                       ))}
                     </tr>
@@ -703,7 +860,7 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── Outcome-based ────────────────────────────── */}
+            {/* ── Outcome-based */}
             {selected.id === "outcome" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -716,17 +873,10 @@ export default function ProjectTypesPage() {
                       <input type="number" value={outcome.baseFee} onChange={e => setOutcome(o => ({ ...o, baseFee: Number(e.target.value) }))}
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs text-slate-700 font-semibold block mb-1">Performance Bonus %</label>
-                        <input type="number" value={outcome.bonusPct} onChange={e => setOutcome(o => ({ ...o, bonusPct: Number(e.target.value) }))}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
-                      </div>
-                      <div>
-                        <label className="text-xs text-slate-700 font-semibold block mb-1">Penalty %</label>
-                        <input type="number" value={outcome.penaltyPct} onChange={e => setOutcome(o => ({ ...o, penaltyPct: Number(e.target.value) }))}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
-                      </div>
+                    <div>
+                      <label className="text-xs text-slate-700 font-semibold block mb-1">Penalty %</label>
+                      <input type="number" value={outcome.penaltyPct} onChange={e => setOutcome(o => ({ ...o, penaltyPct: Number(e.target.value) }))}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
                     </div>
                     <div>
                       <label className="text-xs text-slate-700 font-semibold block mb-1">Duration (months)</label>
@@ -738,12 +888,29 @@ export default function ProjectTypesPage() {
                       <textarea rows={2} defaultValue="99.9% uptime · Page load < 2s · CSAT > 4.5"
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
                     </div>
+                    {/* Performance Bonus — optional */}
+                    <div className={`rounded-lg border p-3 space-y-2 transition-colors ${includeBonus ? "border-green-200 bg-green-50" : "border-slate-200 bg-slate-50"}`}>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-slate-700 font-semibold">
+                          Performance Bonus % <span className="text-slate-400 font-normal">(optional)</span>
+                        </label>
+                        <button onClick={() => setIncludeBonus(b => !b)}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${includeBonus ? "bg-green-500" : "bg-slate-300"}`}>
+                          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${includeBonus ? "translate-x-4" : "translate-x-1"}`} />
+                        </button>
+                      </div>
+                      {includeBonus && (
+                        <input type="number" value={outcome.bonusPct} onChange={e => setOutcome(o => ({ ...o, bonusPct: Number(e.target.value) }))}
+                          placeholder="e.g. 20"
+                          className="w-full border border-green-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:outline-none bg-white" />
+                      )}
+                    </div>
                   </div>
                   <div className={`rounded-xl border-2 ${selected.borderColor} ${selected.color} p-5 flex flex-col justify-center space-y-4`}>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Cost Breakdown</p>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between"><span className="text-slate-500">Base ({outcome.duration} months)</span><span className="font-semibold text-slate-700">{fmt(outcomeBase)}</span></div>
-                      <div className="flex justify-between text-green-700"><span>+ Bonus ({outcome.bonusPct}% on hit)</span><span className="font-semibold">+{fmt(outcomeBonus)}</span></div>
+                      {includeBonus && <div className="flex justify-between text-green-700"><span>+ Bonus ({outcome.bonusPct}% on hit)</span><span className="font-semibold">+{fmt(outcomeBonus)}</span></div>}
                       <div className="flex justify-between text-red-600"><span>− Penalty ({outcome.penaltyPct}% if missed)</span><span className="font-semibold">−{fmt(outcomeBase * outcome.penaltyPct / 100)}</span></div>
                       <div className="flex justify-between border-t border-slate-200 pt-2 text-indigo-700"><span className="font-bold">Total Project Cost</span><span className="font-bold text-lg">{fmt(outcomeTotal)}</span></div>
                     </div>
@@ -752,7 +919,7 @@ export default function ProjectTypesPage() {
               </>
             )}
 
-            {/* ── Milestone ────────────────────────────────── */}
+            {/* ── Milestone */}
             {selected.id === "milestone" && (
               <>
                 <div className={`rounded-xl px-5 py-3 text-white text-sm font-semibold flex items-center gap-2 ${selected.headerColor}`}>
@@ -765,7 +932,7 @@ export default function ProjectTypesPage() {
                       className="border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold w-44 focus:ring-2 focus:ring-indigo-300 focus:outline-none" />
                   </div>
                   <div className={`text-sm px-4 py-2 rounded-lg font-semibold ${totalMsPct === 100 ? "bg-green-100 text-green-700" : totalMsPct < 100 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}>
-                    Total %: {totalMsPct}% {totalMsPct === 100 ? "✓" : totalMsPct < 100 ? `(${100 - totalMsPct}% remaining)` : "(over by " + (totalMsPct - 100) + "%)"}
+                    Total %: {totalMsPct}% {totalMsPct === 100 ? "✓" : totalMsPct < 100 ? `(${100 - totalMsPct}% remaining)` : `(over by ${totalMsPct - 100}%)`}
                   </div>
                 </div>
                 <table className="w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
@@ -846,28 +1013,128 @@ export default function ProjectTypesPage() {
           </div>
         )}
 
-        {/* ── PHASES TAB ─────────────────────────────────────────────────── */}
-        {tab === "phases" && hasPhasesTab && (
+        {/* ── PROJECT MILESTONE TIMELINE TAB ─────────────────────────────── */}
+        {tab === "phases" && (
           <div className="p-6">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">Lifecycle Phases</p>
-            <div className="relative max-w-xl">
-              <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200" />
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-sm font-bold text-slate-700">Project Milestone Timeline</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Define project phases with start/end dates, hours per month, and comments</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500 font-medium">{currentInclude ? "Included" : "Not included"}</span>
+                <button
+                  onClick={() => setIncludePhases(p => ({ ...p, [selected.id]: !p[selected.id] }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${currentInclude ? selected.headerColor : "bg-slate-300"}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${currentInclude ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            </div>
+
+            {currentInclude ? (
               <div className="space-y-3">
-                {selected.phases.map((ph, i) => (
-                  <div key={i} className="flex items-start gap-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 z-10 ${selected.headerColor}`}>{i + 1}</div>
-                    <div className={`flex-1 rounded-lg px-4 py-3 border-2 ${i === 0 ? selected.borderColor + " " + selected.color : "border-slate-100 bg-slate-50"}`}>
-                      <p className="text-sm font-semibold text-slate-700">{ph}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {i === 0 ? "Project initiation, team setup, stakeholder alignment" :
-                         i === selected.phases.length - 1 ? "Final delivery, client sign-off, handover & closure" :
-                         "Active execution, reviews, client feedback & iteration"}
-                      </p>
+                {currentPhases.map((ph, i) => (
+                  <div key={ph.id} className={`rounded-xl border-2 p-4 space-y-3 ${i === 0 ? selected.borderColor + " " + selected.color : "border-slate-200 bg-slate-50"}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${selected.headerColor}`}>{i + 1}</div>
+                      <input value={ph.label}
+                        onChange={e => updatePhase(ph.id, "label", e.target.value)}
+                        className="flex-1 font-semibold text-sm text-slate-700 bg-transparent border-b border-dashed border-slate-300 focus:outline-none focus:border-indigo-400 px-1 py-0.5" />
+                      <button onClick={() => removePhase(ph.id)}
+                        className="text-slate-300 hover:text-red-400 text-xs px-2 py-1 rounded transition-colors font-bold">✕</button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3 pl-10">
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">Start Date</label>
+                        <input type="date" value={ph.startDate}
+                          onChange={e => updatePhase(ph.id, "startDate", e.target.value)}
+                          className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">End Date</label>
+                        <input type="date" value={ph.endDate}
+                          onChange={e => updatePhase(ph.id, "endDate", e.target.value)}
+                          className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">Hours / Month</label>
+                        <input type="number" value={ph.hoursPerMonth}
+                          onChange={e => updatePhase(ph.id, "hoursPerMonth", Number(e.target.value))}
+                          className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-500 font-medium block mb-1">Comment</label>
+                        <input value={ph.comment}
+                          onChange={e => updatePhase(ph.id, "comment", e.target.value)}
+                          placeholder="Notes..."
+                          className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
                     </div>
                   </div>
                 ))}
+
+                {showAddPhase ? (
+                  <div className="rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50 p-4 space-y-3">
+                    <p className="text-xs font-semibold text-indigo-700">New Phase</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-600 font-medium block mb-1">Phase Label *</label>
+                        <input value={newPhase.label} onChange={e => setNewPhase(p => ({ ...p, label: e.target.value }))}
+                          placeholder="e.g. Sprint 1, UAT, Go Live"
+                          className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-600 font-medium block mb-1">Hours / Month</label>
+                        <input type="number" value={newPhase.hoursPerMonth}
+                          onChange={e => setNewPhase(p => ({ ...p, hoursPerMonth: Number(e.target.value) }))}
+                          className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-600 font-medium block mb-1">Start Date</label>
+                        <input type="date" value={newPhase.startDate}
+                          onChange={e => setNewPhase(p => ({ ...p, startDate: e.target.value }))}
+                          className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-600 font-medium block mb-1">End Date</label>
+                        <input type="date" value={newPhase.endDate}
+                          onChange={e => setNewPhase(p => ({ ...p, endDate: e.target.value }))}
+                          className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-600 font-medium block mb-1">Comment</label>
+                      <input value={newPhase.comment}
+                        onChange={e => setNewPhase(p => ({ ...p, comment: e.target.value }))}
+                        placeholder="Optional notes for this phase..."
+                        className="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-300 focus:outline-none bg-white" />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={addPhase}
+                        className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700">Add Phase</button>
+                      <button onClick={() => { setShowAddPhase(false); setNewPhase({ label: "", startDate: "", endDate: "", hoursPerMonth: 0, comment: "" }) }}
+                        className="px-4 py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-200">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowAddPhase(true)}
+                    className={`w-full rounded-xl border-2 border-dashed py-3 text-sm font-semibold transition-all hover:opacity-80 ${selected.borderColor} ${selected.color}`}>
+                    + Add Phase
+                  </button>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-4xl mb-3">📅</div>
+                <p className="text-sm font-semibold text-slate-600">Project Milestone Timeline not included</p>
+                <p className="text-xs text-slate-400 mt-1 mb-4">Toggle above to add an editable milestone timeline to this project</p>
+                <button
+                  onClick={() => setIncludePhases(p => ({ ...p, [selected.id]: true }))}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold text-white ${selected.headerColor} hover:opacity-90`}>
+                  Include Milestone Timeline
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
