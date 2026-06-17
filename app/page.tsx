@@ -14,7 +14,7 @@ const recentTasks = [
   { id: "T-102", title: "Fix login page redirect bug", type: "Bug", status: "Review", assignee: "Priya M.", sp: 2 },
   { id: "T-103", title: "Setup CI/CD pipeline", type: "Task", status: "To Do", assignee: "Amit K.", sp: 3 },
   { id: "T-104", title: "Design dashboard wireframes", type: "Story", status: "Done", assignee: "Sneha R.", sp: 4 },
-  { id: "T-105", title: "Database schema migration", type: "R&N", status: "Testing", assignee: "Vikram P.", sp: 8 },
+  { id: "T-105", title: "Database schema migration", type: "R&D", status: "Testing", assignee: "Vikram P.", sp: 8 },
 ];
 
 const typeColors: Record<string, string> = {
@@ -22,7 +22,7 @@ const typeColors: Record<string, string> = {
   Bug: "bg-red-100 text-red-700",
   Task: "bg-purple-100 text-purple-700",
   Epic: "bg-orange-100 text-orange-700",
-  "R&N": "bg-yellow-100 text-yellow-700",
+  "R&D": "bg-yellow-100 text-yellow-700",
 };
 
 const statusColors: Record<string, string> = {

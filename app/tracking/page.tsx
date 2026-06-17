@@ -20,7 +20,7 @@ const initialEntries: TimeEntry[] = [
   { id: "L-106", taskId: "T-S01", taskTitle: "User registration DB schema", taskType: "Story", date: "2026-03-06", hours: 6, user: "Rahul S.", comment: "Schema migration applied", sprint: "Sprint 1" },
   { id: "L-107", taskId: "T-B01", taskTitle: "Fix form validation bug", taskType: "Bug", date: "2026-03-06", hours: 4, user: "Priya M.", comment: "Validation logic corrected", sprint: "Sprint 1" },
   { id: "L-108", taskId: "T-T03", taskTitle: "Docker containerization", taskType: "Task", date: "2026-03-09", hours: 8, user: "Amit K.", comment: "Docker compose setup complete", sprint: "Sprint 1" },
-  { id: "L-109", taskId: "T-R01", taskTitle: "Tech stack evaluation", taskType: "R&N", date: "2026-03-09", hours: 6, user: "Vikram P.", comment: "Final stack recommendations documented", sprint: "Sprint 1" },
+  { id: "L-109", taskId: "T-R01", taskTitle: "Tech stack evaluation", taskType: "R&D", date: "2026-03-09", hours: 6, user: "Vikram P.", comment: "Final stack recommendations documented", sprint: "Sprint 1" },
   { id: "L-110", taskId: "T-S03", taskTitle: "Dashboard wireframes", taskType: "Story", date: "2026-03-10", hours: 7, user: "Sneha R.", comment: "Wireframes approved by PM", sprint: "Sprint 1" },
   { id: "L-111", taskId: "T-S04", taskTitle: "JWT token implementation", taskType: "Story", date: "2026-03-10", hours: 8, user: "Rahul S.", comment: "JWT signing and refresh logic done", sprint: "Sprint 1" },
   { id: "L-112", taskId: "T-S05", taskTitle: "Frontend routing setup", taskType: "Story", date: "2026-03-11", hours: 6, user: "Priya M.", comment: "Next.js App Router configured", sprint: "Sprint 1" },
@@ -30,7 +30,7 @@ const initialEntries: TimeEntry[] = [
   { id: "L-116", taskId: "T-B02", taskTitle: "Auth edge case handling", taskType: "Bug", date: "2026-03-13", hours: 2, user: "Rahul S.", comment: "Token expiry edge case fixed", sprint: "Sprint 1" },
   { id: "L-117", taskId: "T-T05", taskTitle: "Unit test setup", taskType: "Task", date: "2026-03-13", hours: 4, user: "Priya M.", comment: "Jest + React Testing Library configured", sprint: "Sprint 1" },
   { id: "L-118", taskId: "T-T06", taskTitle: "Server monitoring setup", taskType: "Task", date: "2026-03-14", hours: 3, user: "Amit K.", comment: "Prometheus + Grafana configured", sprint: "Sprint 1" },
-  { id: "L-119", taskId: "T-R02", taskTitle: "Performance baseline benchmarks", taskType: "R&N", date: "2026-03-14", hours: 5, user: "Vikram P.", comment: "Baseline metrics recorded", sprint: "Sprint 1" },
+  { id: "L-119", taskId: "T-R02", taskTitle: "Performance baseline benchmarks", taskType: "R&D", date: "2026-03-14", hours: 5, user: "Vikram P.", comment: "Baseline metrics recorded", sprint: "Sprint 1" },
 
   // ── Sprint 2 (total: 115h) ──────────────────────────────────────────────
   { id: "L-201", taskId: "T-N01", taskTitle: "Email notification service", taskType: "Story", date: "2026-03-17", hours: 8, user: "Rahul S.", comment: "Email templates and SMTP configured", sprint: "Sprint 2" },
@@ -41,7 +41,7 @@ const initialEntries: TimeEntry[] = [
   { id: "L-206", taskId: "T-R01", taskTitle: "User role management API", taskType: "Story", date: "2026-03-20", hours: 7, user: "Rahul S.", comment: "RBAC endpoints implemented", sprint: "Sprint 2" },
   { id: "L-207", taskId: "T-R02", taskTitle: "Role assignment UI", taskType: "Story", date: "2026-03-20", hours: 6, user: "Priya M.", comment: "Admin role management screens done", sprint: "Sprint 2" },
   { id: "L-208", taskId: "T-T10", taskTitle: "Load balancer config", taskType: "Task", date: "2026-03-23", hours: 5, user: "Amit K.", comment: "Nginx load balancer configured", sprint: "Sprint 2" },
-  { id: "L-209", taskId: "T-R03", taskTitle: "Redis caching layer", taskType: "R&N", date: "2026-03-23", hours: 8, user: "Vikram P.", comment: "Redis caching strategy implemented", sprint: "Sprint 2" },
+  { id: "L-209", taskId: "T-R03", taskTitle: "Redis caching layer", taskType: "R&D", date: "2026-03-23", hours: 8, user: "Vikram P.", comment: "Redis caching strategy implemented", sprint: "Sprint 2" },
   { id: "L-210", taskId: "T-N06", taskTitle: "In-app notification badge", taskType: "Story", date: "2026-03-24", hours: 5, user: "Sneha R.", comment: "Notification dot and counter UI done", sprint: "Sprint 2" },
   { id: "L-211", taskId: "T-B10", taskTitle: "Notification delivery failure bug", taskType: "Bug", date: "2026-03-24", hours: 3, user: "Rahul S.", comment: "Retry logic added", sprint: "Sprint 2" },
   { id: "L-212", taskId: "T-T11", taskTitle: "End-to-end test suite", taskType: "Task", date: "2026-03-25", hours: 7, user: "Priya M.", comment: "Cypress E2E tests written for auth flows", sprint: "Sprint 2" },
@@ -60,7 +60,7 @@ const initialEntries: TimeEntry[] = [
   { id: "L-306", taskId: "T-A06", taskTitle: "Audit log API", taskType: "Story", date: "2026-04-10", hours: 7, user: "Rahul S.", comment: "Audit trail stored and queryable", sprint: "Sprint 3" },
   { id: "L-307", taskId: "T-A07", taskTitle: "Bulk export CSV feature", taskType: "Story", date: "2026-04-10", hours: 7, user: "Priya M.", comment: "CSV export with filters implemented", sprint: "Sprint 3" },
   { id: "L-308", taskId: "T-T20", taskTitle: "Database index optimization", taskType: "Task", date: "2026-04-13", hours: 4, user: "Amit K.", comment: "Slow queries identified and indexed", sprint: "Sprint 3" },
-  { id: "L-309", taskId: "T-R10", taskTitle: "GraphQL vs REST evaluation", taskType: "R&N", date: "2026-04-13", hours: 7, user: "Vikram P.", comment: "REST maintained for consistency", sprint: "Sprint 3" },
+  { id: "L-309", taskId: "T-R10", taskTitle: "GraphQL vs REST evaluation", taskType: "R&D", date: "2026-04-13", hours: 7, user: "Vikram P.", comment: "REST maintained for consistency", sprint: "Sprint 3" },
   { id: "L-310", taskId: "T-A08", taskTitle: "Dark mode design pass", taskType: "Story", date: "2026-04-14", hours: 6, user: "Sneha R.", comment: "Dark theme tokens defined", sprint: "Sprint 3" },
   { id: "L-311", taskId: "T-B20", taskTitle: "Session timeout bug fix", taskType: "Bug", date: "2026-04-14", hours: 4, user: "Rahul S.", comment: "Session refresh interval corrected", sprint: "Sprint 3" },
   { id: "L-312", taskId: "T-T21", taskTitle: "Security penetration test", taskType: "Task", date: "2026-04-15", hours: 6, user: "Priya M.", comment: "Pen test results reviewed and patched", sprint: "Sprint 3" },
@@ -73,7 +73,7 @@ const initialEntries: TimeEntry[] = [
   // ── Sprint 4 (total: 23h — active, partial) ─────────────────────────────
   { id: "L-401", taskId: "T-101", taskTitle: "Implement user authentication", taskType: "Story", date: "2026-05-21", hours: 4, user: "Rahul S.", comment: "Completed JWT signing logic", sprint: "Sprint 4" },
   { id: "L-402", taskId: "T-102", taskTitle: "Fix login redirect bug", taskType: "Bug", date: "2026-05-21", hours: 2, user: "Priya M.", comment: "Root cause identified, fix in review", sprint: "Sprint 4" },
-  { id: "L-403", taskId: "T-105", taskTitle: "Redis evaluation", taskType: "R&N", date: "2026-05-20", hours: 6, user: "Vikram P.", comment: "Benchmarks done, Redis preferred", sprint: "Sprint 4" },
+  { id: "L-403", taskId: "T-105", taskTitle: "Redis evaluation", taskType: "R&D", date: "2026-05-20", hours: 6, user: "Vikram P.", comment: "Benchmarks done, Redis preferred", sprint: "Sprint 4" },
   { id: "L-404", taskId: "T-103", taskTitle: "Setup CI/CD pipeline", taskType: "Task", date: "2026-05-20", hours: 3, user: "Amit K.", comment: "GitHub Actions workflow created", sprint: "Sprint 4" },
   { id: "L-405", taskId: "T-104", taskTitle: "Design dashboard wireframes", taskType: "Story", date: "2026-05-19", hours: 5, user: "Sneha R.", comment: "All screens completed in Figma", sprint: "Sprint 4" },
   { id: "L-406", taskId: "T-101", taskTitle: "Implement user authentication", taskType: "Story", date: "2026-05-19", hours: 3, user: "Rahul S.", comment: "Refresh token endpoint setup", sprint: "Sprint 4" },
@@ -85,7 +85,7 @@ const SPRINT_TARGETS: Record<string, number> = {
 
 const typeColors: Record<string, string> = {
   Story: "bg-blue-100 text-blue-700", Bug: "bg-red-100 text-red-700",
-  Task: "bg-purple-100 text-purple-700", "R&N": "bg-yellow-100 text-yellow-700",
+  Task: "bg-purple-100 text-purple-700", "R&D": "bg-yellow-100 text-yellow-700",
   Epic: "bg-orange-100 text-orange-700", "Sub-Task": "bg-slate-100 text-slate-600",
 };
 
@@ -333,7 +333,7 @@ export default function TrackingPage() {
                 value={newLog.taskId} onChange={(e) => setNewLog((p) => ({ ...p, taskId: e.target.value }))} />
               <select className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white"
                 value={newLog.taskType} onChange={(e) => setNewLog((p) => ({ ...p, taskType: e.target.value }))}>
-                {["Task", "Story", "Bug", "Epic", "Sub-Task", "Branch Bug", "R&N"].map((t) => <option key={t}>{t}</option>)}
+                {["Task", "Story", "Bug", "Epic", "Sub-Task", "Branch Bug", "R&D"].map((t) => <option key={t}>{t}</option>)}
               </select>
               <input type="number" step="0.5" min="0.5" className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white" placeholder="Hours"
                 value={newLog.hours} onChange={(e) => setNewLog((p) => ({ ...p, hours: Number(e.target.value) }))} />

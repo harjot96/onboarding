@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import ProjectBanner from "../_components/ProjectBanner";
 
 type BoardType = "Scrum" | "Kanban" | "Waterfall";
-type TaskType = "Task" | "Epic" | "Bug" | "Story" | "Branch Bug" | "Sub-Task" | "R&N";
+type TaskType = "Task" | "Epic" | "Bug" | "Story" | "Branch Bug" | "Sub-Task" | "R&D";
 
 type Comment = {
   id: string; author: string; text: string; hoursLogged: number; timestamp: string;
@@ -48,7 +48,7 @@ const initialTasks: Task[] = [
   { id: "T-102", title: "Fix login page redirect after OAuth", type: "Bug", status: "Review", assignee: "Priya M.", assignedBy: "Rahul S.", dueDate: "2026-05-22", priority: "High", sprint: "Sprint 4", tags: ["frontend"], epicId: "E-01", estimatedHours: 6, loggedHours: 5, comments: [{ id: "c4", author: "Priya M.", text: "Root cause: missing redirect URI in config. Fix applied.", hoursLogged: 5, timestamp: "2026-05-21 14:00" }] },
   { id: "T-103", title: "Setup CI/CD pipeline with GitHub Actions", type: "Task", status: "To Do", assignee: "Amit K.", assignedBy: "Vikram P.", dueDate: "2026-05-28", priority: "Medium", sprint: "Sprint 4", tags: ["devops"], estimatedHours: 12, loggedHours: 0, comments: [] },
   { id: "T-104", title: "Design dashboard wireframes in Figma", type: "Story", status: "Done", assignee: "Sneha R.", assignedBy: "Rahul S.", dueDate: "2026-05-20", priority: "Medium", sprint: "Sprint 4", tags: ["design"], storyId: "S-02", estimatedHours: 16, loggedHours: 16, comments: [{ id: "c5", author: "Sneha R.", text: "All wireframes signed off by product.", hoursLogged: 8, timestamp: "2026-05-19 17:00" }, { id: "c6", author: "Sneha R.", text: "Revisions done after review.", hoursLogged: 8, timestamp: "2026-05-20 12:00" }] },
-  { id: "T-105", title: "Evaluate Redis vs Memcached for caching", type: "R&N", status: "Testing", assignee: "Vikram P.", assignedBy: "Amit K.", dueDate: "2026-05-27", priority: "Low", sprint: "Sprint 4", tags: ["research"], estimatedHours: 10, loggedHours: 13.5, comments: [{ id: "c7", author: "Vikram P.", text: "Redis wins on persistence & pub/sub. Deeper analysis on cluster mode required.", hoursLogged: 7, timestamp: "2026-05-24 11:00" }, { id: "c8", author: "Vikram P.", text: "Cluster mode benchmarks completed — took 3.5h extra over estimate.", hoursLogged: 6.5, timestamp: "2026-05-25 16:00" }] },
+  { id: "T-105", title: "Evaluate Redis vs Memcached for caching", type: "R&D", status: "Testing", assignee: "Vikram P.", assignedBy: "Amit K.", dueDate: "2026-05-27", priority: "Low", sprint: "Sprint 4", tags: ["research"], estimatedHours: 10, loggedHours: 13.5, comments: [{ id: "c7", author: "Vikram P.", text: "Redis wins on persistence & pub/sub. Deeper analysis on cluster mode required.", hoursLogged: 7, timestamp: "2026-05-24 11:00" }, { id: "c8", author: "Vikram P.", text: "Cluster mode benchmarks completed — took 3.5h extra over estimate.", hoursLogged: 6.5, timestamp: "2026-05-25 16:00" }] },
   { id: "T-106", title: "User registration form validation", type: "Sub-Task", status: "In Progress", assignee: "Priya M.", assignedBy: "Rahul S.", dueDate: "2026-05-23", priority: "High", sprint: "Sprint 4", tags: ["frontend"], storyId: "S-01", estimatedHours: 4, loggedHours: 2, comments: [] },
   { id: "T-107", title: "Main branch has broken CSS import", type: "Branch Bug", status: "Reopen", assignee: "Amit K.", assignedBy: "Priya M.", dueDate: "2026-05-21", priority: "High", sprint: "Sprint 4", tags: ["urgent"], estimatedHours: 3, loggedHours: 4, comments: [{ id: "c9", author: "Amit K.", text: "Initial fix failed on prod build. Traced to webpack config conflict — 1h over estimate.", hoursLogged: 4, timestamp: "2026-05-21 09:00" }] },
   { id: "T-108", title: "Admin panel – role management UI", type: "Story", status: "To Do", assignee: "Rahul S.", assignedBy: "Vikram P.", dueDate: "2026-06-05", priority: "Medium", sprint: "Sprint 5", tags: ["frontend", "admin"], epicId: "E-01", storyId: "S-03", estimatedHours: 32, loggedHours: 0, comments: [] },
@@ -62,7 +62,7 @@ const typeColors: Record<string, string> = {
   Epic: "bg-orange-100 text-orange-700 border-orange-200",
   "Branch Bug": "bg-red-200 text-red-800 border-red-300",
   "Sub-Task": "bg-slate-100 text-slate-600 border-slate-200",
-  "R&N": "bg-yellow-100 text-yellow-700 border-yellow-200",
+  "R&D": "bg-yellow-100 text-yellow-700 border-yellow-200",
 };
 const priorityDot: Record<string, string> = { High: "bg-red-500", Medium: "bg-amber-400", Low: "bg-green-400" };
 
@@ -326,7 +326,7 @@ export default function BoardPage() {
             </div>
             <select className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white text-slate-600"
               value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-              {["All", "Task", "Story", "Bug", "Epic", "Branch Bug", "Sub-Task", "R&N"].map((t) => <option key={t}>{t}</option>)}
+              {["All", "Task", "Story", "Bug", "Epic", "Branch Bug", "Sub-Task", "R&D"].map((t) => <option key={t}>{t}</option>)}
             </select>
             <button onClick={() => setShowAddTask(true)}
               className="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700 transition-colors">
@@ -344,7 +344,7 @@ export default function BoardPage() {
               value={newTask.title} onChange={(e) => setNewTask((p) => ({ ...p, title: e.target.value }))} />
             <select className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white"
               value={newTask.type} onChange={(e) => setNewTask((p) => ({ ...p, type: e.target.value as TaskType }))}>
-              {["Task", "Story", "Bug", "Epic", "Branch Bug", "Sub-Task", "R&N"].map((t) => <option key={t}>{t}</option>)}
+              {["Task", "Story", "Bug", "Epic", "Branch Bug", "Sub-Task", "R&D"].map((t) => <option key={t}>{t}</option>)}
             </select>
             <select className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white"
               value={newTask.priority} onChange={(e) => setNewTask((p) => ({ ...p, priority: e.target.value }))}>

@@ -55,13 +55,48 @@ const ALL_TASKS = [
 
 const initialSprints: Sprint[] = [
   {
+    id: "SP-1", name: "Sprint 1", startDate: "2026-03-03", endDate: "2026-03-14",
+    capacity: 80, allocated: 78, velocity: 34, status: "Completed", boardType: "Scrum",
+    linkedMilestones: ["MVP Release"], linkedEpics: ["E-01"], linkedStories: ["S-01"], linkedTasks: ["T-01", "T-02"],
+    stories: [
+      { id: "S-P1-01", title: "Project scaffolding & folder structure", type: "Story", hours: 20, hoursLogged: 20, assignee: "Amit K.", status: "Done" },
+      { id: "T-P1-01", title: "CI/CD pipeline setup", type: "Task", hours: 14, hoursLogged: 14, assignee: "Amit K.", status: "Done" },
+      { id: "T-P1-02", title: "Authentication foundations", type: "Task", hours: 24, hoursLogged: 22, assignee: "Rahul S.", status: "Done" },
+      { id: "T-P1-03", title: "Database schema design", type: "Task", hours: 18, hoursLogged: 18, assignee: "Vikram P.", status: "Done" },
+      { id: "B-P1-01", title: "Fix local env Docker compose", type: "Bug", hours: 4, hoursLogged: 4, assignee: "Sneha R.", status: "Done" },
+    ],
+  },
+  {
+    id: "SP-2", name: "Sprint 2", startDate: "2026-03-17", endDate: "2026-03-28",
+    capacity: 80, allocated: 76, velocity: 30, status: "Completed", boardType: "Scrum",
+    linkedMilestones: ["MVP Release", "Beta Launch"], linkedEpics: ["E-01", "E-02"], linkedStories: ["S-02", "S-03"], linkedTasks: ["T-103"],
+    stories: [
+      { id: "S-P2-01", title: "Notification service — email & push", type: "Story", hours: 24, hoursLogged: 24, assignee: "Vikram P.", status: "Done" },
+      { id: "S-P2-02", title: "Role management & permissions", type: "Story", hours: 22, hoursLogged: 20, assignee: "Rahul S.", status: "Done" },
+      { id: "T-P2-01", title: "Dashboard layout components", type: "Task", hours: 16, hoursLogged: 15, assignee: "Priya M.", status: "Done" },
+      { id: "B-P2-01", title: "Session token expiry bug", type: "Bug", hours: 6, hoursLogged: 6, assignee: "Sneha R.", status: "Done" },
+    ],
+  },
+  {
+    id: "SP-3", name: "Sprint 3", startDate: "2026-04-07", endDate: "2026-04-18",
+    capacity: 80, allocated: 72, velocity: 28, status: "Completed", boardType: "Scrum",
+    linkedMilestones: ["Beta Launch"], linkedEpics: ["E-01", "E-02"], linkedStories: ["S-03"], linkedTasks: ["T-109"],
+    stories: [
+      { id: "S-P3-01", title: "API integrations — third party services", type: "Story", hours: 28, hoursLogged: 26, assignee: "Rahul S.", status: "Done" },
+      { id: "T-P3-01", title: "Performance optimisations", type: "Task", hours: 18, hoursLogged: 18, assignee: "Vikram P.", status: "Done" },
+      { id: "T-P3-02", title: "Automated testing setup", type: "Task", hours: 16, hoursLogged: 14, assignee: "Meera J.", status: "Done" },
+      { id: "R-P3-01", title: "Redis vs Memcached benchmark", type: "R&D", hours: 10, hoursLogged: 10, assignee: "Vikram P.", status: "Done" },
+    ],
+  },
+  {
     id: "SP-4", name: "Sprint 4", startDate: "2026-05-15", endDate: "2026-05-28",
     capacity: 80, allocated: 76, velocity: 32, status: "Active", boardType: "Scrum",
-    linkedMilestones: ["MVP Release"], linkedEpics: ["E-01"], linkedStories: ["S-01", "S-02"], linkedTasks: ["T-101"],
+    linkedMilestones: ["MVP Release"], linkedEpics: ["E-01"], linkedStories: ["S-01", "S-02"], linkedTasks: ["T-101", "T-103"],
     stories: [
       { id: "S-01", title: "User registration flow", type: "Story", hours: 20, hoursLogged: 18, assignee: "Rahul S.", status: "In Progress" },
       { id: "S-02", title: "JWT authentication", type: "Story", hours: 12, hoursLogged: 12, assignee: "Priya M.", status: "Done" },
       { id: "T-01", title: "CI/CD setup", type: "Task", hours: 10, hoursLogged: 6, assignee: "Amit K.", status: "In Progress", attachedStoryId: "S-01" },
+      { id: "T-103", title: "Setup CI/CD pipeline with GitHub Actions", type: "Task", hours: 12, hoursLogged: 0, assignee: "Amit K.", status: "To Do", attachedStoryId: "S-02" },
       { id: "B-01", title: "Login redirect bug", type: "Bug", hours: 4, hoursLogged: 4, assignee: "Sneha R.", status: "Done", attachedStoryId: "S-02" },
     ],
   },
@@ -71,7 +106,7 @@ const initialSprints: Sprint[] = [
     linkedMilestones: ["MVP Release", "Beta Launch"], linkedEpics: ["E-01", "E-02"], linkedStories: ["S-03"], linkedTasks: ["T-109"],
     stories: [
       { id: "S-03", title: "Admin role management", type: "Story", hours: 32, hoursLogged: 0, assignee: "Rahul S.", status: "To Do" },
-      { id: "R-01", title: "Redis evaluation", type: "R&N", hours: 13, hoursLogged: 0, assignee: "Vikram P.", status: "To Do" },
+      { id: "R-01", title: "Redis evaluation", type: "R&D", hours: 13, hoursLogged: 0, assignee: "Vikram P.", status: "To Do" },
     ],
   },
   {
@@ -84,7 +119,7 @@ const initialSprints: Sprint[] = [
 
 const typeColors: Record<string, string> = {
   Story: "bg-blue-100 text-blue-700", Bug: "bg-red-100 text-red-700",
-  Task: "bg-purple-100 text-purple-700", "R&N": "bg-yellow-100 text-yellow-700",
+  Task: "bg-purple-100 text-purple-700", "R&D": "bg-yellow-100 text-yellow-700",
   Epic: "bg-orange-100 text-orange-700",
 };
 const statusColors: Record<string, string> = {
@@ -110,6 +145,8 @@ export default function PlanningPage() {
 
   // Item detail modal
   const [selectedItem, setSelectedItem] = useState<SprintStory | null>(null);
+
+  const [showPastSprints, setShowPastSprints] = useState(false);
 
   // Link items modal
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -256,8 +293,15 @@ export default function PlanningPage() {
       )}
 
       {/* Sprint Cards */}
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-semibold text-slate-600">Sprints</h2>
+        <button onClick={() => setShowPastSprints(p => !p)}
+          className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${showPastSprints ? "bg-slate-700 text-white border-slate-700" : "border-slate-300 text-slate-500 hover:bg-slate-100"}`}>
+          {showPastSprints ? "Hide Past Sprints" : "Show Past Sprints"}
+        </button>
+      </div>
       <div className="grid grid-cols-4 gap-3">
-        {sprints.map((sp) => {
+        {sprints.filter(sp => showPastSprints || sp.status !== "Completed").map((sp) => {
           const pct = sp.capacity > 0 ? Math.round((sp.allocated / sp.capacity) * 100) : 0;
           const over = sp.allocated > sp.capacity;
           const isSelected = selectedSprint.id === sp.id;
@@ -368,7 +412,7 @@ export default function PlanningPage() {
               <span className="text-sm font-semibold text-indigo-700">New Sprint Item</span>
               <select className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white"
                 value={newItem.type} onChange={(e) => setNewItem((p) => ({ ...p, type: e.target.value }))}>
-                {["Story", "Task", "Bug", "R&N", "Sub-Task"].map((t) => <option key={t}>{t}</option>)}
+                {["Story", "Task", "Bug", "R&D", "Sub-Task"].map((t) => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -437,12 +481,16 @@ export default function PlanningPage() {
                   <td className="px-4 py-2.5 text-slate-500 text-xs">{s.assignee}</td>
                   <td className="px-4 py-2.5">
                     {s.attachedStoryId ? (
-                      <button onClick={() => setSelectedItem(s)} className="flex items-center gap-1 text-blue-600 hover:text-blue-800">
+                      <button onClick={() => {
+                        const linkedStory = selectedSprint.stories.find(st => st.id === s.attachedStoryId)
+                          ?? { id: s.attachedStoryId ?? "", title: ALL_STORIES.find(st => st.id === s.attachedStoryId)?.title ?? s.attachedStoryId ?? "", type: "Story", hours: 0, hoursLogged: 0, assignee: "", status: "To Do" };
+                        setSelectedItem(linkedStory);
+                      }} className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline">
                         <span>📎</span>
                         <span className="font-mono text-xs">{s.attachedStoryId}</span>
                       </button>
                     ) : s.type === "Story" ? (
-                      <span className="text-xs text-blue-500 font-mono">Story</span>
+                      <button onClick={() => setSelectedItem(s)} className="text-xs text-blue-500 font-mono hover:underline">Story →</button>
                     ) : (
                       <span className="text-slate-300 text-xs">—</span>
                     )}
@@ -817,15 +865,21 @@ export default function PlanningPage() {
                   <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
                     <span>📎</span> Attached User Story
                   </div>
-                  <div className="flex items-start gap-3 px-3 py-3 bg-blue-50 rounded-xl border border-blue-100">
+                  <button
+                    onClick={() => {
+                      const linkedStory = selectedSprint.stories.find(st => st.id === selectedItem.attachedStoryId)
+                        ?? { id: selectedItem.attachedStoryId!, title: ALL_STORIES.find(st => st.id === selectedItem.attachedStoryId)?.title ?? selectedItem.attachedStoryId!, type: "Story", hours: 0, hoursLogged: 0, assignee: "", status: "To Do" };
+                      setSelectedItem(linkedStory);
+                    }}
+                    className="w-full flex items-start gap-3 px-3 py-3 bg-blue-50 rounded-xl border border-blue-100 hover:bg-blue-100 hover:border-blue-300 transition-colors text-left">
                     <div className="px-1.5 py-0.5 bg-blue-100 rounded text-xs font-mono text-blue-700 shrink-0 mt-0.5">{selectedItem.attachedStoryId}</div>
                     <div className="flex-1">
                       <div className="text-sm font-medium text-slate-700">
                         {ALL_STORIES.find((s) => s.id === selectedItem.attachedStoryId)?.title ?? selectedItem.attachedStoryId}
                       </div>
-                      <div className="text-xs text-blue-500 mt-0.5">User Story</div>
+                      <div className="text-xs text-blue-500 mt-0.5">Click to open story →</div>
                     </div>
-                  </div>
+                  </button>
                 </div>
               )}
 

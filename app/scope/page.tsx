@@ -52,7 +52,7 @@ const fallbackBacklog: Item[] = [
   { id: "T-01", title: "Setup project scaffolding and folder structure",type: "Task", priority: "Medium", assignee: "Amit K.",  assignedBy: "Vikram P.", description: "Create base folder structure per architecture doc.", startDate: "2026-05-01", endDate: "2026-05-05", epicId: "E-01", sprintId: "Sprint 4", sp: 3, status: "Done", plannedHours: 8, actualHours: 6 },
   { id: "T-02", title: "Configure CI/CD pipeline with GitHub Actions",  type: "Task", priority: "Medium", assignee: "Amit K.",  assignedBy: "Vikram P.", description: "Setup automated build, test and deploy pipeline.", startDate: "2026-05-05", endDate: "2026-05-12", epicId: "E-01", sprintId: "Sprint 4", sp: 5, status: "In Progress", plannedHours: 12, actualHours: 10 },
   { id: "B-01", title: "Login form doesn't validate on submit",         type: "Bug",  priority: "High",   assignee: "Sneha R.", assignedBy: "Priya M.",  epicId: "E-01", sprintId: "Sprint 4", sp: 2, status: "Open", blocked: true, plannedHours: 4, actualHours: 0 },
-  { id: "R-01", title: "Evaluate Redis vs Memcached for caching layer", type: "R&N",  priority: "Low",    assignee: "Vikram P.",assignedBy: "Amit K.",   epicId: "E-02", sp: 2, status: "Open", plannedHours: 8, actualHours: 0 },
+  { id: "R-01", title: "Evaluate Redis vs Memcached for caching layer", type: "R&D",  priority: "Low",    assignee: "Vikram P.",assignedBy: "Amit K.",   epicId: "E-02", sp: 2, status: "Open", plannedHours: 8, actualHours: 0 },
   { id: "S-03", title: "As admin I can manage user roles and permissions",type:"Story",priority: "Medium", assignee: "Rahul S.", assignedBy: "Vikram P.", startDate: "2026-05-28", endDate: "2026-06-10", documents: [], epicId: "E-01", sprintId: "Sprint 5", sp: 13, status: "To Do", plannedHours: 32, actualHours: 0 },
 ];
 
@@ -70,7 +70,7 @@ const fallbackMilestones: Milestone[] = [
 
 const typeColors: Record<string, string> = {
   Story: "bg-blue-100 text-blue-700", Bug: "bg-red-100 text-red-700",
-  Task: "bg-purple-100 text-purple-700", Epic: "bg-orange-100 text-orange-700", "R&N": "bg-yellow-100 text-yellow-700",
+  Task: "bg-purple-100 text-purple-700", Epic: "bg-orange-100 text-orange-700", "R&D": "bg-yellow-100 text-yellow-700",
 };
 const priorityColors: Record<string, string> = {
   High: "text-red-600 bg-red-50", Medium: "text-amber-600 bg-amber-50", Low: "text-green-600 bg-green-50",
@@ -140,6 +140,12 @@ export default function ScopePage() {
   const [filterType, setFilterType] = useState("All");
   const [wbsUploaded, setWbsUploaded] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [pertPanel, setPertPanel] = useState(false);
+  const [pertItems, setPertItems] = useState<Record<string, { o: number; m: number; p: number }>>(
+    () => Object.fromEntries(fallbackBacklog.map(i => [i.id, { o: 0, m: 0, p: 0 }]))
+  );
+  const [devEstPanel, setDevEstPanel] = useState(false);
+  const [devEstUploaded, setDevEstUploaded] = useState(false);
 
   const [editModal, setEditModal] = useState<Item | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Item>>({});
@@ -223,7 +229,7 @@ export default function ScopePage() {
   const addItem = () => {
     if (!newItem.title.trim()) return;
     const id = `NEW-${Date.now().toString().slice(-4)}`;
-    setBacklog((p) => [...p, { ...newItem, id, documents: newItem.type === "Story" ? [] : undefined }]);
+    setBacklog((p) => [...p, { ...newItem, id, documents: ["Story", "R&D"].includes(newItem.type) ? [] : undefined }]);
     setNewItem({ ...BLANK_ITEM });
     setShowAddForm(false);
   };
@@ -259,7 +265,7 @@ export default function ScopePage() {
   const epicsInBacklog = backlog.filter((i) => i.type === "Epic");
   const isEpic = newItem.type === "Epic";
   const isStory = newItem.type === "Story";
-  const isTaskLike = ["Task", "Sub-Task", "R&N"].includes(newItem.type);
+  const isTaskLike = ["Task", "Sub-Task", "R&D", "Branch Bug"].includes(newItem.type);
 
   const availCount = resources.filter(r => r.availability === "Available").length;
   const partialCount = resources.filter(r => r.availability === "Partial").length;
@@ -327,6 +333,18 @@ export default function ScopePage() {
                   <span className="leading-tight text-center">{btn.label}</span>
                 </button>
               ))}
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-slate-100">
+              <button onClick={() => { setPertPanel(p => !p); setDevEstPanel(false); }}
+                className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors flex flex-col items-center gap-1 ${pertPanel ? "bg-amber-600 text-white border-amber-600" : "border-amber-200 text-amber-700 hover:bg-amber-50"}`}>
+                <span className="text-base">📐</span>
+                <span className="leading-tight text-center">PERT Estimation</span>
+              </button>
+              <button onClick={() => { setDevEstPanel(p => !p); setPertPanel(false); }}
+                className={`py-2 px-2 rounded-lg border text-xs font-medium transition-colors flex flex-col items-center gap-1 ${devEstPanel ? "bg-teal-600 text-white border-teal-600" : "border-teal-200 text-teal-700 hover:bg-teal-50"}`}>
+                <span className="text-base">📊</span>
+                <span className="leading-tight text-center">Dev Team Estimation</span>
+              </button>
             </div>
           </div>
         </div>
@@ -434,6 +452,125 @@ export default function ScopePage() {
             )}
           </div>
         )}
+
+        {/* PERT Estimation panel */}
+        {pertPanel && (
+          <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-amber-800">📐 PERT Estimation</span>
+                <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">E = (O + 4M + P) / 6</span>
+              </div>
+              <button onClick={() => setPertPanel(false)} className="text-amber-400 hover:text-amber-700 text-lg leading-none">×</button>
+            </div>
+            <p className="text-xs text-amber-700">Enter Optimistic (O), Most Likely (M), and Pessimistic (P) hours for each item. PERT estimate = (O + 4M + P) ÷ 6.</p>
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              <div className="grid grid-cols-6 gap-2 text-xs text-amber-700 font-semibold px-2">
+                <div className="col-span-2">Item</div><div className="text-center">O (hrs)</div><div className="text-center">M (hrs)</div><div className="text-center">P (hrs)</div><div className="text-center">PERT Est.</div>
+              </div>
+              {backlog.filter(i => i.type !== "Epic").map(item => {
+                const p = pertItems[item.id] ?? { o: 0, m: 0, p: 0 };
+                const pert = p.m > 0 ? Math.round(((p.o + 4 * p.m + p.p) / 6) * 10) / 10 : 0;
+                const sd = p.m > 0 ? Math.round(((p.p - p.o) / 6) * 10) / 10 : 0;
+                return (
+                  <div key={item.id} className="grid grid-cols-6 gap-2 items-center bg-white rounded-lg px-2 py-2 border border-amber-100">
+                    <div className="col-span-2">
+                      <div className="text-xs font-mono text-amber-700">{item.id}</div>
+                      <div className="text-xs text-slate-600 truncate">{item.title}</div>
+                    </div>
+                    {(["o", "m", "p"] as const).map(k => (
+                      <input key={k} type="number" min={0} value={p[k] || ""}
+                        onChange={e => setPertItems(prev => ({ ...prev, [item.id]: { ...prev[item.id] ?? { o: 0, m: 0, p: 0 }, [k]: Number(e.target.value) } }))}
+                        className="w-full border border-amber-200 rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-amber-400" placeholder="0" />
+                    ))}
+                    <div className="text-center">
+                      {pert > 0 ? (
+                        <div>
+                          <div className="text-sm font-bold text-amber-700">{pert}h</div>
+                          <div className="text-xs text-amber-500">±{sd}h</div>
+                        </div>
+                      ) : <span className="text-slate-300 text-xs">—</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-2 pt-1 border-t border-amber-100">
+              <button onClick={() => {
+                setBacklog(prev => prev.map(item => {
+                  const p = pertItems[item.id];
+                  if (!p || p.m === 0) return item;
+                  const pert = Math.round(((p.o + 4 * p.m + p.p) / 6) * 10) / 10;
+                  return { ...item, plannedHours: pert };
+                }));
+                setPertPanel(false);
+              }} className="px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700">
+                Apply PERT Estimates to Backlog
+              </button>
+              <button onClick={() => setPertPanel(false)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* Dev Team Estimation panel */}
+        {devEstPanel && (
+          <div className="border border-teal-200 bg-teal-50 rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-teal-800">📊 Dev Team Estimation</span>
+                <span className="text-xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full">Upload team estimates in Excel / CSV</span>
+              </div>
+              <button onClick={() => setDevEstPanel(false)} className="text-teal-400 hover:text-teal-700 text-lg leading-none">×</button>
+            </div>
+            <p className="text-xs text-teal-700">Dev team can upload their story-point or hour estimates as an Excel/CSV file. Expected columns: <span className="font-mono bg-teal-100 px-1 rounded">ID, Title, EstHours, AssignedTo, Notes</span></p>
+            <div className={`border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-colors ${devEstUploaded ? "border-green-400 bg-green-50" : "border-teal-300 hover:border-teal-500 hover:bg-teal-100"}`}
+              onClick={() => { if (!devEstUploaded) setTimeout(() => setDevEstUploaded(true), 800); }}>
+              {devEstUploaded
+                ? <div className="text-green-600 font-medium text-sm">✓ DevTeam_Estimates_Sprint4.xlsx uploaded — 12 tasks imported</div>
+                : <><div className="text-3xl mb-2">📊</div><div className="text-sm font-medium text-teal-700">Click to upload estimation file</div><div className="text-xs text-teal-500 mt-1">.xlsx, .csv, .xls accepted</div></>}
+            </div>
+            {devEstUploaded && (
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-teal-800 mb-1">Preview — Imported Estimates</div>
+                <div className="overflow-x-auto rounded-lg border border-teal-200">
+                  <table className="w-full text-xs">
+                    <thead><tr className="bg-teal-100 text-teal-700">
+                      <th className="px-3 py-2 text-left">ID</th><th className="px-3 py-2 text-left">Title</th><th className="px-3 py-2 text-center">Est. Hours</th><th className="px-3 py-2 text-left">Assigned To</th>
+                    </tr></thead>
+                    <tbody className="divide-y divide-teal-50">
+                      {[
+                        { id: "T-01", title: "Setup project scaffolding", hrs: 10, dev: "Amit K." },
+                        { id: "T-02", title: "Configure CI/CD pipeline", hrs: 14, dev: "Amit K." },
+                        { id: "S-01", title: "User registration flow", hrs: 20, dev: "Priya M." },
+                        { id: "S-02", title: "JWT authentication", hrs: 12, dev: "Priya M." },
+                        { id: "B-01", title: "Login redirect bug", hrs: 4, dev: "Sneha R." },
+                      ].map(r => (
+                        <tr key={r.id} className="bg-white hover:bg-teal-50">
+                          <td className="px-3 py-2 font-mono text-teal-700">{r.id}</td>
+                          <td className="px-3 py-2 text-slate-700">{r.title}</td>
+                          <td className="px-3 py-2 text-center font-semibold text-slate-700">{r.hrs}h</td>
+                          <td className="px-3 py-2 text-slate-500">{r.dev}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={() => {
+                    setBacklog(prev => prev.map(item => {
+                      const map: Record<string, number> = { "T-01": 10, "T-02": 14, "S-01": 20, "S-02": 12, "B-01": 4 };
+                      return item.id in map ? { ...item, plannedHours: map[item.id] } : item;
+                    }));
+                    setDevEstPanel(false);
+                  }} className="px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700">
+                    Import Estimates to Backlog
+                  </button>
+                  <button onClick={() => setDevEstUploaded(false)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Re-upload</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -450,7 +587,7 @@ export default function ScopePage() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium text-slate-600">Filter:</span>
-              {["All", "Epic", "Story", "Task", "Bug", "R&N"].map((f) => (
+              {["All", "Epic", "Story", "Task", "Bug", "R&D"].map((f) => (
                 <button key={f} onClick={() => setFilterType(f)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${filterType === f ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{f}</button>
               ))}
@@ -464,7 +601,7 @@ export default function ScopePage() {
                 <span className="text-sm font-semibold text-indigo-700">New Backlog Item</span>
                 <select className="border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white"
                   value={newItem.type} onChange={(e) => setNewItem((p) => ({ ...p, type: e.target.value }))}>
-                  {["Story", "Task", "Bug", "Epic", "R&N", "Sub-Task", "Branch Bug"].map((t) => <option key={t}>{t}</option>)}
+                  {["Story", "Task", "Bug", "Epic", "R&D", "Sub-Task", "Branch Bug"].map((t) => <option key={t}>{t}</option>)}
                 </select>
                 <select className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white"
                   value={newItem.priority} onChange={(e) => setNewItem((p) => ({ ...p, priority: e.target.value }))}>
@@ -1123,14 +1260,16 @@ export default function ScopePage() {
                     value={editDraft.endDate ?? ""} onChange={(e) => setEditDraft((p) => ({ ...p, endDate: e.target.value }))} />
                 </div>
               </div>
-              {editModal.type === "Story" && (
+              {(editModal.type === "Story" || editModal.type === "R&D") && (
                 <div>
                   <div className="flex items-center gap-2 mb-2"><span className="text-lg">📎</span><div className="text-sm font-medium text-slate-700">Attachments</div></div>
                   {(!editDraft.documents || editDraft.documents.length === 0)
                     ? <div className="text-sm text-slate-400 py-3 text-center border border-dashed border-slate-200 rounded-lg mb-2">No attachments yet</div>
                     : <div className="space-y-1.5 mb-2">{editDraft.documents.map((doc, i) => (
                         <div key={i} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
-                          <span className="text-red-500">📄</span><span className="flex-1 text-sm text-slate-700">{doc}</span><span className="text-xs text-slate-400">PDF</span>
+                          <span className="text-red-500">📄</span>
+                          <button onClick={() => alert(`Opening: ${doc}\n\n(In production this would download or preview the file.)`)} className="flex-1 text-sm text-indigo-600 hover:text-indigo-800 text-left hover:underline">{doc}</button>
+                          <span className="text-xs text-slate-400">PDF</span>
                           <button onClick={() => setEditDraft((p) => ({ ...p, documents: (p.documents ?? []).filter((_, j) => j !== i) }))} className="text-xs text-red-400 hover:text-red-600">✕</button>
                         </div>
                       ))}</div>}
