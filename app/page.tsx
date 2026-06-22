@@ -79,7 +79,6 @@ export default function Dashboard() {
                 <th className="text-left pb-2">Title</th>
                 <th className="text-left pb-2">Type</th>
                 <th className="text-left pb-2">Status</th>
-                <th className="text-left pb-2">SP</th>
                 <th className="text-left pb-2">Assignee</th>
               </tr>
             </thead>
@@ -94,7 +93,6 @@ export default function Dashboard() {
                   <td className="py-2">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[t.status] ?? "bg-gray-100"}`}>{t.status}</span>
                   </td>
-                  <td className="py-2 text-slate-500">{t.sp}</td>
                   <td className="py-2 text-slate-500 text-xs">{t.assignee}</td>
                 </tr>
               ))}

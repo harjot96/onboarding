@@ -441,6 +441,14 @@ export default function PlanningPage() {
           </div>
         )}
 
+        {selectedSprint.boardType !== "Scrum" && (
+          <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
+            <span className="text-amber-600 text-sm">ℹ</span>
+            <span className="text-xs text-amber-700">
+              <strong>{selectedSprint.boardType} mode:</strong> Sprint planning columns (velocity, story linking) are disabled. Items flow continuously without sprint capacity constraints.
+            </span>
+          </div>
+        )}
         <table className="w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-400 bg-slate-50 border-b border-slate-100">
@@ -449,6 +457,7 @@ export default function PlanningPage() {
               <th className="text-left px-4 py-2">Type</th>
               <th className="text-left px-4 py-2">Est. Hrs</th>
               <th className="text-left px-4 py-2">Logged</th>
+              <th className="text-left px-4 py-2">Remaining</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assignee</th>
               <th className="text-left px-4 py-2">Attachment</th>
@@ -456,7 +465,7 @@ export default function PlanningPage() {
           </thead>
           <tbody>
             {selectedSprint.stories.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-8 text-slate-400 text-sm">No stories in this sprint yet — click + Add Story or + Add Task</td></tr>
+              <tr><td colSpan={9} className="text-center py-8 text-slate-400 text-sm">No stories in this sprint yet — click + Add Story or + Add Task</td></tr>
             ) : (
               selectedSprint.stories.map((s) => (
                 <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50">
@@ -474,6 +483,12 @@ export default function PlanningPage() {
                   <td className="px-4 py-2.5 text-slate-500">{s.hours}h</td>
                   <td className="px-4 py-2.5">
                     <span className={s.hoursLogged >= s.hours ? "text-green-600 font-medium" : "text-slate-500"}>{s.hoursLogged}h</span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {(() => {
+                      const rem = Math.max(0, s.hours - s.hoursLogged);
+                      return <span className={rem === 0 ? "text-green-600 font-medium" : rem < s.hours * 0.25 ? "text-amber-600 font-medium" : "text-slate-500"}>{rem}h</span>;
+                    })()}
                   </td>
                   <td className="px-4 py-2.5">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${statusColors[s.status] ?? "bg-gray-100"}`}>{s.status}</span>

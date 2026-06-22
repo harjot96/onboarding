@@ -204,7 +204,8 @@ export default function TrackingPage() {
   // Per-sprint hours for breakdown (shown when a specific sprint is selected)
   const sprintBreakdown = Object.entries(SPRINT_TARGETS).map(([name, target]) => {
     const hrs = entries.filter((e) => e.sprint === name).reduce((a, e) => a + e.hours, 0);
-    return { name, hrs, target, pct: Math.min(Math.round((hrs / target) * 100), 100), isActive: name === "Sprint 4" };
+    const isOver = hrs > target;
+    return { name, hrs, target, pct: Math.min(Math.round((hrs / target) * 100), 100), isActive: name === "Sprint 4", isOver };
   });
 
   return (
@@ -288,15 +289,24 @@ export default function TrackingPage() {
         <div className="grid grid-cols-4 gap-3">
           {sprintBreakdown.map((sp) => (
             <button key={sp.name} onClick={() => setSprintFilter(sp.name === sprintFilter ? "All" : sp.name)}
-              className={`rounded-lg p-3 border text-left transition-all ${sprintFilter === sp.name ? "border-indigo-400 bg-indigo-50" : sp.isActive ? "border-indigo-200 bg-indigo-50/50 hover:border-indigo-300" : "border-slate-100 hover:border-slate-200"}`}>
-              <div className="text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
-                {sp.name}{sp.isActive && <span className="text-indigo-600 font-semibold">(Active)</span>}
+              className={`rounded-lg p-3 border text-left transition-all ${
+                sp.isOver ? "border-red-400 bg-red-50" :
+                sprintFilter === sp.name ? "border-indigo-400 bg-indigo-50" :
+                sp.isActive ? "border-indigo-200 bg-indigo-50/50 hover:border-indigo-300" :
+                "border-slate-100 hover:border-slate-200"
+              }`}>
+              <div className="text-xs font-medium mb-1 flex items-center gap-1">
+                <span className={sp.isOver ? "text-red-600" : "text-slate-500"}>{sp.name}</span>
+                {sp.isActive && <span className="text-indigo-600 font-semibold">(Active)</span>}
+                {sp.isOver && <span className="text-red-600 font-bold text-xs ml-auto">⚠ OVER</span>}
               </div>
-              <div className="text-xl font-bold text-slate-800">{sp.hrs}h</div>
+              <div className={`text-xl font-bold ${sp.isOver ? "text-red-700" : "text-slate-800"}`}>{sp.hrs}h</div>
               <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                <div className={`h-1.5 rounded-full ${sp.isActive ? "bg-indigo-500" : "bg-green-500"}`} style={{ width: `${sp.pct}%` }} />
+                <div className={`h-1.5 rounded-full ${sp.isOver ? "bg-red-500" : sp.isActive ? "bg-indigo-500" : "bg-green-500"}`} style={{ width: `${Math.min(sp.pct, 100)}%` }} />
               </div>
-              <div className="text-xs text-slate-400 mt-1">{sp.pct}% of {sp.target}h target</div>
+              <div className={`text-xs mt-1 ${sp.isOver ? "text-red-500 font-medium" : "text-slate-400"}`}>
+                {sp.pct}% of {sp.target}h target{sp.isOver && ` (+${sp.hrs - sp.target}h overshoot)`}
+              </div>
             </button>
           ))}
         </div>
@@ -363,7 +373,7 @@ export default function TrackingPage() {
               <th className="text-left px-4 py-2">Type</th>
               <th className="text-left px-4 py-2">Date</th>
               <th className="text-left px-4 py-2">Hours</th>
-              <th className="text-left px-4 py-2 text-amber-500">Task Progress vs Est.</th>
+              <th className="text-left px-4 py-2 text-amber-500">Task Progress vs Est. <span className="text-slate-400 font-normal">(as of date)</span></th>
               <th className="text-left px-4 py-2">Member</th>
               <th className="text-left px-4 py-2">Sprint</th>
               <th className="text-left px-4 py-2">Comment</th>
@@ -388,7 +398,8 @@ export default function TrackingPage() {
                     const pct  = info.estimate > 0 ? Math.min(Math.round((info.totalLogged / info.estimate) * 100), 999) : 0;
                     const isOT = info.overtime > 0;
                     return (
-                      <div className="space-y-1 min-w-32">
+                      <div className="space-y-1 min-w-36">
+                        <div className="text-xs text-slate-400 font-mono mb-0.5">as of {e.date}</div>
                         <div className="flex items-center justify-between text-xs">
                           <span className={isOT ? "text-amber-600 font-semibold" : "text-slate-500"}>
                             {info.totalLogged}h / {info.estimate}h est.
@@ -402,7 +413,7 @@ export default function TrackingPage() {
                         <div className={`text-xs ${isOT ? "text-amber-600 font-medium" : "text-slate-400"}`}>{pct}% of estimate</div>
                       </div>
                     );
-                  })() : <span className="text-slate-300 text-xs italic">No estimate</span>}
+                  })() : <div className="space-y-1"><div className="text-xs text-slate-400 font-mono">{e.date}</div><span className="text-slate-300 text-xs italic">No estimate</span></div>}
                 </td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-1.5">

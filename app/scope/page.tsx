@@ -10,7 +10,7 @@ type Item = {
   sp?: number; status?: string; blocked?: boolean;
   plannedHours?: number; actualHours?: number;
 };
-type Risk = { id: string; risk: string; impact: string; probability: string; mitigation: string; closeByDate: string; closed: boolean };
+type Risk = { id: string; risk: string; impact: string; probability: string; mitigation: string; closeByDate: string; closed: boolean; preSales?: boolean };
 type Milestone = { id: string; name: string; date: string; status: string; items: number };
 type Resource = {
   id: string; name: string; role: string;
@@ -47,7 +47,7 @@ const initialResources: Resource[] = GLOBAL_RESOURCE_POOL.filter(r => initialPro
 const fallbackBacklog: Item[] = [
   { id: "E-01", title: "User Management Module",                       type: "Epic",  priority: "High",   assignee: "Rahul S.",  assignedBy: "Vikram P.", description: "Full user lifecycle management including registration, login, roles and permissions.", startDate: "2026-05-01", endDate: "2026-06-30", sp: 40, status: "In Progress", plannedHours: 80, actualHours: 62 },
   { id: "E-02", title: "Notification System",                          type: "Epic",  priority: "Medium", assignee: "Vikram P.", assignedBy: "Rahul S.",  description: "Email, push and in-app notification service.", startDate: "2026-06-01", endDate: "2026-07-15", sp: 24, status: "Planned", plannedHours: 48, actualHours: 0 },
-  { id: "S-01", title: "As a user I can register with email/password", type: "Story", priority: "High",   assignee: "Priya M.", assignedBy: "Rahul S.",  startDate: "2026-05-10", endDate: "2026-05-20", documents: [], epicId: "E-01", sprintId: "Sprint 4", sp: 8, status: "In Progress", plannedHours: 20, actualHours: 18 },
+  { id: "S-01", title: "As a user I can register with email/password", type: "Story", priority: "High",   assignee: "Priya M.", assignedBy: "Rahul S.",  startDate: "2026-05-10", endDate: "2026-05-20", documents: ["US_S01_User_Registration_Journey.pdf"], epicId: "E-01", sprintId: "Sprint 4", sp: 8, status: "In Progress", plannedHours: 20, actualHours: 18 },
   { id: "S-02", title: "As a user I can login and receive JWT token",  type: "Story", priority: "High",   assignee: "Priya M.", assignedBy: "Rahul S.",  startDate: "2026-05-20", endDate: "2026-05-25", documents: [], epicId: "E-01", sprintId: "Sprint 4", sp: 5, status: "Done", plannedHours: 12, actualHours: 12 },
   { id: "T-01", title: "Setup project scaffolding and folder structure",type: "Task", priority: "Medium", assignee: "Amit K.",  assignedBy: "Vikram P.", description: "Create base folder structure per architecture doc.", startDate: "2026-05-01", endDate: "2026-05-05", epicId: "E-01", sprintId: "Sprint 4", sp: 3, status: "Done", plannedHours: 8, actualHours: 6 },
   { id: "T-02", title: "Configure CI/CD pipeline with GitHub Actions",  type: "Task", priority: "Medium", assignee: "Amit K.",  assignedBy: "Vikram P.", description: "Setup automated build, test and deploy pipeline.", startDate: "2026-05-05", endDate: "2026-05-12", epicId: "E-01", sprintId: "Sprint 4", sp: 5, status: "In Progress", plannedHours: 12, actualHours: 10 },
@@ -146,10 +146,15 @@ export default function ScopePage() {
   );
   const [devEstPanel, setDevEstPanel] = useState(false);
   const [devEstUploaded, setDevEstUploaded] = useState(false);
+  // Dev estimates: per-item hours from the uploaded file
+  const [devEstHours, setDevEstHours] = useState<Record<string, number>>({ "T-01": 10, "T-02": 14, "S-01": 20, "S-02": 12, "B-01": 4 });
+  // Win estimate snapshot (project bid hours — from onboarding billing qty or fallback)
+  const [winEstHours] = useState<Record<string, number>>({ "E-01": 80, "E-02": 48, "S-01": 20, "S-02": 12, "T-01": 8, "T-02": 12, "B-01": 4, "R-01": 8, "S-03": 32 });
 
   const [editModal, setEditModal] = useState<Item | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Item>>({});
   const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [userStoryViewer, setUserStoryViewer] = useState<string | null>(null);
 
   const [editingRiskId, setEditingRiskId] = useState<string | null>(null);
   const [riskEdit, setRiskEdit] = useState<Risk | null>(null);
@@ -205,7 +210,7 @@ export default function ScopePage() {
         billingCategoryTasks.push({ id: `T-${String(i + 1).padStart(2, "0")}`, title: b.description, type: "Task", priority: "Medium", assignee: p.technicalLead ?? "", assignedBy: p.projectManager ?? "", startDate: p.startDate ?? "", endDate: p.endDate ?? "", epicId: epics[0]?.id ?? "" });
       });
       setBacklog([...epics, ...billingCategoryTasks]);
-      const scopeRisks: Risk[] = (p.risks ?? []).map((r: { id: string; description: string; impact: string; probability: string; mitigation: string; status: string }) => ({ id: r.id, risk: r.description, impact: r.impact, probability: r.probability, mitigation: r.mitigation, closeByDate: "", closed: riskStatusToClosed(r.status) }));
+      const scopeRisks: Risk[] = (p.risks ?? []).map((r: { id: string; description: string; impact: string; probability: string; mitigation: string; status: string }) => ({ id: r.id, risk: r.description, impact: r.impact, probability: r.probability, mitigation: r.mitigation, closeByDate: "", closed: riskStatusToClosed(r.status), preSales: true }));
       if (scopeRisks.length) setRisks(scopeRisks);
       const scopeMilestones: Milestone[] = (p.milestones ?? []).map((m: { id: string; name: string; dueDate: string; status: string }) => ({ id: m.id, name: m.name, date: m.dueDate, status: msStatus(m.status), items: 0 }));
       if (scopeMilestones.length) setMilestones(scopeMilestones);
@@ -311,7 +316,21 @@ export default function ScopePage() {
         <div className="flex items-start gap-4">
           <div className="flex-1">
             <div className="font-semibold text-slate-700 mb-1">Upload WBS</div>
-            <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${wbsUploaded ? "border-green-400 bg-green-50" : "border-slate-200 hover:border-indigo-400"}`} onClick={() => setWbsUploaded(true)}>
+            <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${wbsUploaded ? "border-green-400 bg-green-50" : "border-slate-200 hover:border-indigo-400"}`} onClick={() => {
+              setWbsUploaded(true);
+              // Auto-generate PERT estimates from plannedHours (O=0.6×, M=1×, P=1.5×)
+              setPertItems(prev => {
+                const next = { ...prev };
+                backlog.forEach(item => {
+                  if (item.plannedHours && item.plannedHours > 0) {
+                    const m = item.plannedHours;
+                    next[item.id] = { o: Math.round(m * 0.6), m, p: Math.round(m * 1.5) };
+                  }
+                });
+                return next;
+              });
+              setPertPanel(true);
+            }}>
               {wbsUploaded ? <div className="text-green-600 font-medium">✓ WBS_ProjectAlpha_v2.xlsx uploaded</div>
                 : <><div className="text-2xl mb-1">📁</div><div className="text-sm text-slate-500">Click to upload WBS (.xlsx, .csv, .pdf)</div></>}
             </div>
@@ -530,40 +549,63 @@ export default function ScopePage() {
                 : <><div className="text-3xl mb-2">📊</div><div className="text-sm font-medium text-teal-700">Click to upload estimation file</div><div className="text-xs text-teal-500 mt-1">.xlsx, .csv, .xls accepted</div></>}
             </div>
             {devEstUploaded && (
-              <div className="space-y-2">
-                <div className="text-xs font-semibold text-teal-800 mb-1">Preview — Imported Estimates</div>
+              <div className="space-y-3">
+                <div className="text-xs font-semibold text-teal-800">3-Way Estimation Comparison</div>
                 <div className="overflow-x-auto rounded-lg border border-teal-200">
                   <table className="w-full text-xs">
-                    <thead><tr className="bg-teal-100 text-teal-700">
-                      <th className="px-3 py-2 text-left">ID</th><th className="px-3 py-2 text-left">Title</th><th className="px-3 py-2 text-center">Est. Hours</th><th className="px-3 py-2 text-left">Assigned To</th>
-                    </tr></thead>
+                    <thead>
+                      <tr className="bg-teal-100 text-teal-700">
+                        <th className="px-3 py-2 text-left">ID</th>
+                        <th className="px-3 py-2 text-left">Title</th>
+                        <th className="px-3 py-2 text-center">Assigned To</th>
+                        <th className="px-3 py-2 text-center bg-amber-50 text-amber-700">🏆 Win Est.</th>
+                        <th className="px-3 py-2 text-center bg-amber-50 text-amber-700">📐 PERT Est.</th>
+                        <th className="px-3 py-2 text-center bg-teal-50 text-teal-700">📊 Dev Est.</th>
+                        <th className="px-3 py-2 text-center">Δ vs Win</th>
+                      </tr>
+                    </thead>
                     <tbody className="divide-y divide-teal-50">
                       {[
-                        { id: "T-01", title: "Setup project scaffolding", hrs: 10, dev: "Amit K." },
-                        { id: "T-02", title: "Configure CI/CD pipeline", hrs: 14, dev: "Amit K." },
-                        { id: "S-01", title: "User registration flow", hrs: 20, dev: "Priya M." },
-                        { id: "S-02", title: "JWT authentication", hrs: 12, dev: "Priya M." },
-                        { id: "B-01", title: "Login redirect bug", hrs: 4, dev: "Sneha R." },
-                      ].map(r => (
-                        <tr key={r.id} className="bg-white hover:bg-teal-50">
-                          <td className="px-3 py-2 font-mono text-teal-700">{r.id}</td>
-                          <td className="px-3 py-2 text-slate-700">{r.title}</td>
-                          <td className="px-3 py-2 text-center font-semibold text-slate-700">{r.hrs}h</td>
-                          <td className="px-3 py-2 text-slate-500">{r.dev}</td>
-                        </tr>
-                      ))}
+                        { id: "T-01", title: "Setup project scaffolding", dev: "Amit K." },
+                        { id: "T-02", title: "Configure CI/CD pipeline", dev: "Amit K." },
+                        { id: "S-01", title: "User registration flow", dev: "Priya M." },
+                        { id: "S-02", title: "JWT authentication", dev: "Priya M." },
+                        { id: "B-01", title: "Login redirect bug", dev: "Sneha R." },
+                      ].map(r => {
+                        const win = winEstHours[r.id] ?? 0;
+                        const pp = pertItems[r.id];
+                        const pert = pp && pp.m > 0 ? Math.round(((pp.o + 4 * pp.m + pp.p) / 6) * 10) / 10 : null;
+                        const devH = devEstHours[r.id] ?? 0;
+                        const delta = win > 0 ? devH - win : null;
+                        return (
+                          <tr key={r.id} className="bg-white hover:bg-teal-50">
+                            <td className="px-3 py-2 font-mono text-teal-700">{r.id}</td>
+                            <td className="px-3 py-2 text-slate-700">{r.title}</td>
+                            <td className="px-3 py-2 text-center text-slate-500">{r.dev}</td>
+                            <td className="px-3 py-2 text-center font-semibold bg-amber-50 text-amber-700">{win > 0 ? `${win}h` : "—"}</td>
+                            <td className="px-3 py-2 text-center font-semibold bg-amber-50 text-amber-700">{pert != null ? `${pert}h` : <span className="text-slate-300">—</span>}</td>
+                            <td className="px-3 py-2 text-center font-bold bg-teal-50 text-teal-700">
+                              <input type="number" min={0} value={devH}
+                                onChange={e => setDevEstHours(prev => ({ ...prev, [r.id]: Number(e.target.value) }))}
+                                className="w-14 text-center border border-teal-200 rounded px-1 py-0.5 bg-white text-teal-700 font-bold" />
+                            </td>
+                            <td className={`px-3 py-2 text-center font-semibold ${delta == null ? "text-slate-300" : delta > 0 ? "text-red-600" : delta < 0 ? "text-green-600" : "text-slate-500"}`}>
+                              {delta == null ? "—" : delta > 0 ? `+${delta}h` : delta < 0 ? `${delta}h` : "0h"}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button onClick={() => {
                     setBacklog(prev => prev.map(item => {
-                      const map: Record<string, number> = { "T-01": 10, "T-02": 14, "S-01": 20, "S-02": 12, "B-01": 4 };
-                      return item.id in map ? { ...item, plannedHours: map[item.id] } : item;
+                      return item.id in devEstHours ? { ...item, plannedHours: devEstHours[item.id] } : item;
                     }));
                     setDevEstPanel(false);
                   }} className="px-4 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700">
-                    Import Estimates to Backlog
+                    Import Dev Estimates to Backlog
                   </button>
                   <button onClick={() => setDevEstUploaded(false)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg hover:bg-slate-200">Re-upload</button>
                 </div>
@@ -683,9 +725,10 @@ export default function ScopePage() {
                   <th className="text-left px-4 py-2">Title / Dates</th>
                   <th className="text-left px-4 py-2">Type</th>
                   <th className="text-left px-4 py-2">Priority</th>
-                  <th className="text-center px-3 py-2">SP</th>
+                  <th className="text-center px-3 py-2">Est. Hrs</th>
+                  <th className="text-center px-3 py-2">Logged</th>
+                  <th className="text-center px-3 py-2">Remaining</th>
                   <th className="text-left px-3 py-2">Status</th>
-                  <th className="text-center px-3 py-2">Progress</th>
                   <th className="text-center px-3 py-2">⚑</th>
                   <th className="text-left px-4 py-2">Epic Link</th>
                   <th className="text-left px-4 py-2">Sprint</th>
@@ -711,7 +754,16 @@ export default function ScopePage() {
                       <td className="px-4 py-2.5"><span className={`px-2 py-0.5 rounded text-xs font-medium ${typeColors[item.type] ?? "bg-gray-100 text-gray-600"}`}>{item.type}</span></td>
                       <td className="px-4 py-2.5"><span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityColors[item.priority] ?? ""}`}>{item.priority}</span></td>
                       <td className="px-3 py-2.5 text-center">
-                        {item.sp ? <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">{item.sp}</span> : <span className="text-slate-300 text-xs">—</span>}
+                        {item.plannedHours ? <span className="text-xs font-semibold text-indigo-600">{item.plannedHours}h</span> : <span className="text-slate-300 text-xs">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        {item.actualHours != null ? <span className={`text-xs font-semibold ${(item.actualHours ?? 0) >= (item.plannedHours ?? 0) && (item.plannedHours ?? 0) > 0 ? "text-green-600" : "text-slate-600"}`}>{item.actualHours}h</span> : <span className="text-slate-300 text-xs">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        {item.plannedHours ? (() => {
+                          const rem = Math.max(0, (item.plannedHours ?? 0) - (item.actualHours ?? 0));
+                          return <span className={`text-xs font-semibold ${rem === 0 ? "text-green-600" : rem < (item.plannedHours ?? 1) * 0.25 ? "text-amber-600" : "text-slate-500"}`}>{rem}h</span>;
+                        })() : <span className="text-slate-300 text-xs">—</span>}
                       </td>
                       <td className="px-3 py-2.5">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -721,15 +773,6 @@ export default function ScopePage() {
                           item.status === "To Do" ? "bg-slate-100 text-slate-500" :
                           "bg-amber-100 text-amber-600"
                         }`}>{item.status || "Open"}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-1.5 w-20">
-                          <div className="flex-1 bg-slate-100 rounded-full h-1.5">
-                            <div className={`h-1.5 rounded-full ${progress >= 100 ? "bg-green-500" : progress > 60 ? "bg-indigo-500" : "bg-amber-400"}`} style={{ width: `${progress}%` }} />
-                          </div>
-                          <span className="text-xs text-slate-400 w-7 text-right">{progress}%</span>
-                        </div>
-                        {item.plannedHours ? <div className="text-xs text-slate-400 mt-0.5">{item.actualHours ?? 0}h/{item.plannedHours}h</div> : null}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         {item.blocked
@@ -798,7 +841,7 @@ export default function ScopePage() {
           <div className="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
             <div>
               <h3 className="font-semibold text-slate-700">Risk Register</h3>
-              {seeded && <p className="text-xs text-slate-400 mt-0.5">Pre-populated from onboarding — fully editable</p>}
+              {seeded && <p className="text-xs text-slate-400 mt-0.5">Pre-populated from pre-sales / onboarding — fully editable. <span className="text-amber-600 font-medium">🔁 Pre-sales risks carried forward.</span></p>}
             </div>
             <button onClick={() => setShowAddRisk(true)} className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">+ Add Risk</button>
           </div>
@@ -831,6 +874,7 @@ export default function ScopePage() {
                 <th className="text-left px-4 py-2">ID</th><th className="text-left px-4 py-2">Risk Description</th>
                 <th className="text-left px-4 py-2">Impact</th><th className="text-left px-4 py-2">Probability</th>
                 <th className="text-left px-4 py-2">Mitigation</th><th className="text-left px-4 py-2">Close By</th>
+                <th className="text-left px-4 py-2">Source</th>
                 <th className="text-left px-4 py-2">Status</th><th className="text-left px-4 py-2">Actions</th>
               </tr>
             </thead>
@@ -844,6 +888,7 @@ export default function ScopePage() {
                     <td className="px-4 py-2"><select className="border border-slate-200 rounded px-2 py-1 text-xs bg-white" value={riskEdit.probability} onChange={(e) => setRiskEdit({ ...riskEdit, probability: e.target.value })}>{["High", "Medium", "Low"].map((v) => <option key={v}>{v}</option>)}</select></td>
                     <td className="px-4 py-2"><input className="w-full border border-slate-200 rounded px-2 py-1 text-xs bg-white" value={riskEdit.mitigation} onChange={(e) => setRiskEdit({ ...riskEdit, mitigation: e.target.value })} /></td>
                     <td className="px-4 py-2"><input type="date" className="border border-slate-200 rounded px-2 py-1 text-xs bg-white" value={riskEdit.closeByDate} onChange={(e) => setRiskEdit({ ...riskEdit, closeByDate: e.target.value })} /></td>
+                    <td className="px-4 py-2"><span className="text-xs text-slate-400">{riskEdit.preSales ? "Pre-sales" : "Project"}</span></td>
                     <td className="px-4 py-2"><label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={riskEdit.closed} onChange={(e) => setRiskEdit({ ...riskEdit, closed: e.target.checked })} /><span className="text-xs">{riskEdit.closed ? "Closed" : "Open"}</span></label></td>
                     <td className="px-4 py-2 flex gap-1"><button onClick={saveRisk} className="px-2 py-1 text-xs bg-green-600 text-white rounded">Save</button><button onClick={() => { setEditingRiskId(null); setRiskEdit(null); }} className="px-2 py-1 text-xs bg-slate-200 text-slate-600 rounded">Cancel</button></td>
                   </tr>
@@ -855,6 +900,11 @@ export default function ScopePage() {
                     <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs font-medium ${impactColors[r.probability]}`}>{r.probability}</span></td>
                     <td className="px-4 py-3 text-slate-500 text-xs">{r.mitigation}</td>
                     <td className="px-4 py-3 text-slate-500 text-xs">{r.closeByDate || "—"}</td>
+                    <td className="px-4 py-3">
+                      {r.preSales
+                        ? <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 border border-amber-200">🔁 Pre-sales</span>
+                        : <span className="text-xs text-slate-400 italic">Project</span>}
+                    </td>
                     <td className="px-4 py-3"><button onClick={() => toggleRiskClosed(r.id)} className={`px-2 py-0.5 rounded text-xs font-medium cursor-pointer ${r.closed ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{r.closed ? "Closed" : "Open"}</button></td>
                     <td className="px-4 py-3"><button onClick={() => startEditRisk(r)} className="px-2 py-1 text-xs bg-slate-100 text-slate-600 rounded hover:bg-slate-200">Edit</button></td>
                   </tr>
@@ -913,7 +963,7 @@ export default function ScopePage() {
                 <div className={`w-3 h-3 rounded-full shrink-0 ${milestoneStatusDot[m.status] ?? "bg-slate-300"}`} />
                 <div className="flex-1">
                   <div className="font-semibold text-slate-700">{m.name}</div>
-                  <div className="text-sm text-slate-400">Target: {m.date}{m.items > 0 ? ` · ${m.items} backlog items` : ""}</div>
+                  <div className="text-sm text-slate-400">Release: {m.date}{m.items > 0 ? ` · ${m.items} backlog items` : ""}</div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${milestoneStatusStyle[m.status] ?? "bg-slate-100 text-slate-500"}`}>{m.status}</span>
                 <button onClick={() => startEditMilestone(m)} className="px-3 py-1.5 text-xs bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200">Edit</button>
@@ -1233,6 +1283,22 @@ export default function ScopePage() {
                       </select>
                     </div>
                     <div>
+                      <label className="text-xs text-slate-400 block mb-1">Link to Story</label>
+                      <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        value={(editDraft as Record<string,unknown>).storyId as string ?? ""} onChange={(e) => setEditDraft((p) => ({ ...p, storyId: e.target.value }))}>
+                        <option value="">— None —</option>
+                        {backlog.filter((i) => i.type === "Story").map((s) => <option key={s.id} value={s.id}>{s.id}: {s.title}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">Link to Milestone</label>
+                      <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        value={(editDraft as Record<string,unknown>).milestoneId as string ?? ""} onChange={(e) => setEditDraft((p) => ({ ...p, milestoneId: e.target.value }))}>
+                        <option value="">— None —</option>
+                        {milestones.map((m) => <option key={m.id} value={m.id}>{m.id}: {m.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
                       <label className="text-xs text-slate-400 block mb-1">Sprint</label>
                       <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
                         value={editDraft.sprintId ?? ""} onChange={(e) => setEditDraft((p) => ({ ...p, sprintId: e.target.value }))}>
@@ -1268,7 +1334,7 @@ export default function ScopePage() {
                     : <div className="space-y-1.5 mb-2">{editDraft.documents.map((doc, i) => (
                         <div key={i} className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-100">
                           <span className="text-red-500">📄</span>
-                          <button onClick={() => alert(`Opening: ${doc}\n\n(In production this would download or preview the file.)`)} className="flex-1 text-sm text-indigo-600 hover:text-indigo-800 text-left hover:underline">{doc}</button>
+                          <button onClick={() => doc === "US_S01_User_Registration_Journey.pdf" ? setUserStoryViewer(doc) : alert(`Opening: ${doc}`)} className="flex-1 text-sm text-indigo-600 hover:text-indigo-800 text-left hover:underline">{doc}</button>
                           <span className="text-xs text-slate-400">PDF</span>
                           <button onClick={() => setEditDraft((p) => ({ ...p, documents: (p.documents ?? []).filter((_, j) => j !== i) }))} className="text-xs text-red-400 hover:text-red-600">✕</button>
                         </div>
@@ -1282,6 +1348,117 @@ export default function ScopePage() {
               <div className="flex gap-2 pt-1 border-t border-slate-100">
                 <button onClick={saveEditModal} className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">Save Changes</button>
                 <button onClick={() => setEditModal(null)} className="px-4 py-2 bg-slate-100 text-slate-600 text-sm rounded-lg">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Story Viewer */}
+      {userStoryViewer && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" onClick={() => setUserStoryViewer(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white z-10">
+              <div>
+                <div className="text-xs text-slate-400 font-mono mb-0.5">US-S01 · User Registration Journey</div>
+                <div className="font-semibold text-slate-800 text-lg">User Story — New User Registration &amp; Onboarding</div>
+              </div>
+              <button onClick={() => setUserStoryViewer(null)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="px-6 py-5 space-y-5 text-sm text-slate-700">
+              {/* Header cards */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100">
+                  <div className="text-xs text-indigo-500 font-medium mb-0.5">Role</div>
+                  <div className="font-semibold text-indigo-800">New Visitor</div>
+                </div>
+                <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                  <div className="text-xs text-emerald-500 font-medium mb-0.5">Goal</div>
+                  <div className="font-semibold text-emerald-800">Register an account</div>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
+                  <div className="text-xs text-amber-500 font-medium mb-0.5">Benefit</div>
+                  <div className="font-semibold text-amber-800">Access the platform</div>
+                </div>
+              </div>
+
+              {/* Story statement */}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 italic text-slate-600">
+                "As a <strong className="text-slate-800 not-italic">new visitor</strong>, I want to <strong className="text-slate-800 not-italic">create an account using my email or Google/GitHub OAuth</strong>, so that I can <strong className="text-slate-800 not-italic">access the platform and start managing projects immediately</strong>."
+              </div>
+
+              {/* User Journey */}
+              <div>
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3">User Journey</div>
+                <div className="space-y-2">
+                  {[
+                    { step: "1", icon: "🌐", title: "Land on homepage", detail: "User arrives at the marketing page via search, referral, or direct link. They see a clear CTA: \"Get Started Free\"." },
+                    { step: "2", icon: "📋", title: "Navigate to Sign Up", detail: "User clicks CTA and is directed to /register. Page shows email+password form and OAuth options (Google, GitHub)." },
+                    { step: "3", icon: "✏️", title: "Fill in details", detail: "User enters full name, work email, password (min 8 chars, 1 special char). Real-time inline validation shows green checkmarks." },
+                    { step: "4", icon: "🔐", title: "Submit form", detail: "User clicks \"Create Account\". System validates uniqueness of email. If duplicate, shows inline error. If valid, sends verification email." },
+                    { step: "5", icon: "📧", title: "Email verification", detail: "User receives \"Verify your email\" email within 60 seconds. Clicks the link which has a 24-hour expiry token." },
+                    { step: "6", icon: "✅", title: "Account confirmed", detail: "Clicking the link verifies the account. User is automatically signed in and redirected to /onboarding." },
+                    { step: "7", icon: "🎉", title: "Onboarding wizard", detail: "3-step wizard: (1) Set up workspace name, (2) Invite teammates (optional), (3) Choose project template. User can skip to dashboard." },
+                    { step: "8", icon: "🏠", title: "Reach Dashboard", detail: "User lands on the main dashboard with a sample project pre-loaded. In-app tooltip tour begins (dismissible)." },
+                  ].map(({ step, icon, title, detail }) => (
+                    <div key={step} className="flex gap-3 items-start">
+                      <div className="shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{step}</div>
+                      <div className="flex-1 bg-white border border-slate-100 rounded-lg px-3 py-2.5 shadow-sm">
+                        <div className="font-medium text-slate-700 mb-0.5">{icon} {title}</div>
+                        <div className="text-slate-500 text-xs leading-relaxed">{detail}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Acceptance Criteria */}
+              <div>
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Acceptance Criteria</div>
+                <ul className="space-y-1.5">
+                  {[
+                    "User can register with a unique email and a password meeting complexity requirements",
+                    "OAuth registration via Google and GitHub creates an account without requiring a password",
+                    "Duplicate email registration shows a clear inline error within 500ms",
+                    "Verification email is delivered within 60 seconds and link expires after 24 hours",
+                    "Unverified accounts cannot access any authenticated routes",
+                    "On first login, the onboarding wizard is shown (can be dismissed and resumed later)",
+                    "All form interactions are WCAG 2.1 AA accessible (keyboard navigable, screen-reader friendly)",
+                  ].map((ac, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                      <span className="text-emerald-500 mt-0.5 shrink-0">✓</span>
+                      <span>{ac}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Definition of Done */}
+              <div>
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">Definition of Done</div>
+                <ul className="space-y-1.5">
+                  {[
+                    "Unit + integration tests cover happy path and all error branches (≥ 80% coverage)",
+                    "E2E test for email registration and OAuth registration both pass in CI",
+                    "Security: passwords hashed with bcrypt (cost ≥ 12); tokens are single-use and server-validated",
+                    "No personal data logged to stdout or log files",
+                    "QA sign-off on mobile (375px) and desktop (1440px) breakpoints",
+                    "Product Owner demo acceptance",
+                  ].map((dod, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                      <span className="text-indigo-400 mt-0.5 shrink-0">◆</span>
+                      <span>{dod}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Footer meta */}
+              <div className="flex items-center gap-4 pt-2 border-t border-slate-100 text-xs text-slate-400">
+                <span>Est. Hrs: <strong className="text-slate-600">20h</strong></span>
+                <span>Priority: <strong className="text-rose-600">High</strong></span>
+                <span>Linked Epic: <strong className="text-slate-600">E-01</strong></span>
+                <span>Sprint: <strong className="text-slate-600">Sprint 1</strong></span>
               </div>
             </div>
           </div>
