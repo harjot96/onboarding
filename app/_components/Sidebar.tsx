@@ -4,16 +4,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const nav = [
-  { href: "/won-projects", label: "Won Projects",      icon: "🎯", group: "CRM" },
-  { href: "/onboarding",   label: "Project Onboarding", icon: "🏆", group: "CRM" },
-  { href: "/project-types", label: "Project Type Guide", icon: "🗂", group: "CRM" },
-  { href: "/", label: "Dashboard", icon: "⊞", group: "Project" },
-  { href: "/scope", label: "Scope & Backlog", icon: "📋", group: "Project" },
-  { href: "/board", label: "Task Board", icon: "🗂", group: "Project" },
-  { href: "/planning", label: "Planning & Sprints", icon: "📅", group: "Project" },
-  { href: "/tracking", label: "Time Tracking", icon: "⏱", group: "Project" },
-  { href: "/project-cost", label: "Project Cost", icon: "📊", group: "Finance" },
-  { href: "/salary", label: "Salary Cost", icon: "💰", group: "Finance" },
+  { href: "/won-projects",    label: "Won Projects",       icon: "🎯", group: "CRM" },
+  { href: "/onboarding",      label: "Project Onboarding", icon: "🏆", group: "CRM" },
+  { href: "/project-types",   label: "Project Type Guide", icon: "🗂", group: "CRM" },
+  { href: "/",                label: "Dashboard",          icon: "⊞", group: "Project" },
+  { href: "/scope",           label: "Scope & Backlog",    icon: "📋", group: "Project" },
+  { href: "/board",           label: "Task Board",         icon: "🗂", group: "Project" },
+  { href: "/planning",        label: "Planning & Sprints", icon: "📅", group: "Project" },
+  { href: "/tracking",        label: "Time Tracking",      icon: "⏱", group: "Project" },
+  { href: "/communications",  label: "Comms & Activity",   icon: "💬", group: "Project" },
+  { href: "/invoices",        label: "Invoices",           icon: "🧾", group: "Finance" },
+  { href: "/project-cost",    label: "Project Cost",       icon: "📊", group: "Finance" },
+  { href: "/salary",          label: "Salary Cost",        icon: "💰", group: "Finance" },
 ];
 
 export default function Sidebar() {

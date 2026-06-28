@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProjectBanner from "../_components/ProjectBanner";
+import CRMBadge from "../_components/CRMBadge";
 
 type Item = {
   id: string; title: string; type: string; priority: string;
@@ -17,6 +18,26 @@ type Resource = {
   availability: "Available" | "Partial" | "Not Available";
   capacityHours: number; allocatedHours: number; skills: string[]; currentTasks: number;
 };
+
+type CR = {
+  id: string;
+  title: string;
+  description: string;
+  linkedTaskId: string;
+  impactTimeline: string;
+  impactCost: number;
+  requestedBy: string;
+  status: "Pending" | "Approved" | "Rejected";
+  createdDate: string;
+  resolvedDate: string;
+  approvedBy: string;
+};
+
+const initialCRs: CR[] = [
+  { id: "CR-001", title: "Add 3 additional admin role types", description: "Client requested Super Admin, Department Admin, and Read-Only Admin roles beyond original scope. Impacts user management module significantly.", linkedTaskId: "E-01", impactTimeline: "+2 weeks", impactCost: 85000, requestedBy: "Rajesh Kumar", status: "Approved", createdDate: "2026-06-12", resolvedDate: "2026-06-27", approvedBy: "Arjun Mehta" },
+  { id: "CR-002", title: "Add export to Excel in reports module", description: "Client wants all analytics reports exportable to .xlsx format. Not in original SOW.", linkedTaskId: "AI-03", impactTimeline: "+1 week", impactCost: 35000, requestedBy: "Kiran Nair", status: "Pending", createdDate: "2026-06-20", resolvedDate: "", approvedBy: "" },
+  { id: "CR-003", title: "Integrate SMS OTP alongside email OTP", description: "Security requirement — client wants SMS-based OTP as primary and email as fallback.", linkedTaskId: "S-01", impactTimeline: "+3 days", impactCost: 25000, requestedBy: "Rajesh Kumar", status: "Rejected", createdDate: "2026-06-15", resolvedDate: "2026-06-18", approvedBy: "Arjun Mehta" },
+];
 
 const AVAILABLE_SPRINTS = ["Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4", "Sprint 5", "Sprint 6", "Sprint 7"];
 
@@ -97,6 +118,39 @@ const BLANK_ITEM = { title: "", type: "Story", priority: "Medium", assignee: "",
 const BLANK_RISK = { risk: "", impact: "Medium", probability: "Medium", mitigation: "", closeByDate: "", closed: false };
 const BLANK_RESOURCE: Omit<Resource, "id"> = { name: "", role: "", availability: "Available", capacityHours: 80, allocatedHours: 0, skills: [], currentTasks: 0 };
 
+function BudgetBurnBar({ project, backlog }: { project: { name: string; type: string; budget: number }; backlog: Item[] }) {
+  const totalLogged = backlog.reduce((a, i) => a + (i.actualHours ?? 0), 0);
+  const avgRate = 1200; // ₹ per hour
+  const incurred = totalLogged * avgRate;
+  const pct = project.budget > 0 ? Math.min(100, Math.round(incurred / project.budget * 100)) : 0;
+  const isWarning = pct >= 70;
+  const isDanger = pct >= 90;
+  return (
+    <div className={`rounded-xl border px-5 py-4 mb-4 ${isDanger ? "bg-red-50 border-red-200" : isWarning ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200"}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-slate-700">Budget Burn — {project.type}</span>
+          {isDanger && <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">🔴 Critical</span>}
+          {isWarning && !isDanger && <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full font-medium">⚠️ Warning</span>}
+        </div>
+        <div className="text-right text-xs text-slate-500">
+          <span className={`font-bold text-base ${isDanger ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-800"}`}>₹{Math.round(incurred).toLocaleString("en-IN")}</span>
+          <span className="text-slate-400"> of ₹{project.budget.toLocaleString("en-IN")}</span>
+        </div>
+      </div>
+      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${isDanger ? "bg-red-500" : isWarning ? "bg-amber-500" : "bg-indigo-500"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="flex justify-between mt-1.5 text-xs text-slate-400">
+        <span>{totalLogged}h logged · ₹{avgRate.toLocaleString()}/h avg rate</span>
+        <span>{pct}% budget consumed</span>
+      </div>
+      {isDanger && <div className="mt-2 text-xs text-red-600 font-medium">⚠ Budget nearly exhausted. Raise a Change Request if scope has expanded.</div>}
+      {isWarning && !isDanger && <div className="mt-2 text-xs text-amber-600">Budget utilisation above 70%. Monitor closely and review scope.</div>}
+    </div>
+  );
+}
+
 function riskStatusToClosed(status: string) { return status === "Closed" || status === "Mitigated"; }
 function msStatus(s: string) {
   if (s === "Completed" || s === "In Progress") return "On Track";
@@ -128,6 +182,20 @@ export default function ScopePage() {
   const [milestones, setMilestones] = useState<Milestone[]>(fallbackMilestones);
   const [resources, setResources] = useState<Resource[]>(initialResources);
   const [seeded, setSeeded] = useState(false);
+  const [activeProject, setActiveProject] = useState<{
+    name: string; type: string; budget: number; startDate: string; endDate: string;
+  } | null>(null);
+  const [crs, setCrs] = useState<CR[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("pm_change_requests");
+        if (saved) return JSON.parse(saved) as CR[];
+      } catch {}
+    }
+    return initialCRs;
+  });
+  const [showAddCR, setShowAddCR] = useState(false);
+  const [newCR, setNewCR] = useState({ title: "", description: "", linkedTaskId: "", impactTimeline: "", impactCost: 0, requestedBy: "", status: "Pending" as const });
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItem, setNewItem] = useState<typeof BLANK_ITEM>({ ...BLANK_ITEM });
@@ -197,6 +265,7 @@ export default function ScopePage() {
     const seedTs = localStorage.getItem("pm_scope_seed_ts");
     try {
       const p = JSON.parse(raw);
+      setActiveProject({ name: p.projectName || p.name || "", type: p.projectType || p.type || "", budget: p.budget || p.grandTotal || p.dealValue || 0, startDate: p.startDate || "", endDate: p.endDate || "" });
       if (seedTs && seedTs >= p.initiatedAt) return;
       // If project came from Won Projects (has wbsItems), use those directly
       if (p.wbsItems && p.wbsItems.length > 0) {
@@ -286,6 +355,10 @@ export default function ScopePage() {
   const saveResource = () => { if (!resourceEdit) return; setResources((p) => p.map((r) => r.id === resourceEdit.id ? resourceEdit : r)); setEditingResourceId(null); setResourceEdit(null); };
   const addResource = () => { if (!newResource.name.trim()) return; setResources((p) => [...p, { ...newResource, id: `res${Date.now()}` }]); setNewResource({ ...BLANK_RESOURCE }); setShowAddResource(false); };
 
+  useEffect(() => {
+    localStorage.setItem("pm_change_requests", JSON.stringify(crs));
+  }, [crs]);
+
   const filtered = filterType === "All" ? backlog : backlog.filter((i) => i.type === filterType);
   const epicsInBacklog = backlog.filter((i) => i.type === "Epic");
   const isEpic = newItem.type === "Epic";
@@ -299,6 +372,7 @@ export default function ScopePage() {
   return (
     <div className="p-6 space-y-4">
       <ProjectBanner />
+      <CRMBadge />
 
       <div className="flex items-center justify-between">
         <div>
@@ -642,9 +716,14 @@ export default function ScopePage() {
         )}
       </div>
 
+      {/* Budget Burn Bar */}
+      {activeProject && (activeProject.type === "Fixed Price" || activeProject.type === "Milestone-Based") && (
+        <BudgetBurnBar project={activeProject} backlog={backlog} />
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
-        {["Backlog", "Risk Register", "Milestones & Releases", "Resources"].map((t) => (
+        {["Backlog", "Risk Register", "Milestones & Releases", "Resources", "Change Requests"].map((t) => (
           <button key={t} onClick={() => setActiveTab(t)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${activeTab === t ? "bg-white shadow-sm text-slate-800" : "text-slate-500 hover:text-slate-700"}`}>{t}</button>
         ))}
@@ -945,6 +1024,28 @@ export default function ScopePage() {
       {/* ══ MILESTONES TAB ══ */}
       {activeTab === "Milestones & Releases" && (
         <div className="space-y-3">
+          {activeProject?.type === "Milestone-Based" && (
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-purple-700 font-semibold text-sm">🔒 Gate-Based Delivery</span>
+                <span className="text-xs text-purple-500">Each phase unlocks only after the previous milestone is signed off</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {milestones.map((m, i) => {
+                  const completed = m.status === "On Track" && i < Math.floor(milestones.length / 2);
+                  const locked = i > Math.floor(milestones.length / 2);
+                  return (
+                    <div key={m.id} className="flex items-center gap-1">
+                      <div className={`px-3 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${completed ? "bg-green-100 text-green-700" : locked ? "bg-slate-100 text-slate-400" : "bg-purple-100 text-purple-700"}`}>
+                        {completed ? "✓" : locked ? "🔒" : "▶"} {m.name}
+                      </div>
+                      {i < milestones.length - 1 && <span className="text-slate-300">→</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="bg-white rounded-xl shadow-sm p-4 flex justify-between items-center">
             <div>
               <h3 className="font-semibold text-slate-700">Deliverables / Milestones / Releases</h3>
@@ -1027,6 +1128,55 @@ export default function ScopePage() {
               </div>
             ))}
           </div>
+
+          {activeTab === "Resources" && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-semibold text-amber-800 text-sm">Cross-Project Resource Utilisation</div>
+                <span className="text-xs text-amber-600">⚠ Red = over-allocated across all projects</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { name: "Rahul S.", role: "Backend Lead", thisProject: 60, other: 40, total: 100 },
+                  { name: "Priya M.", role: "Frontend Dev", thisProject: 80, other: 0, total: 80 },
+                  { name: "Amit K.", role: "DevOps", thisProject: 80, other: 20, total: 100 },
+                  { name: "Sneha R.", role: "UI/UX Designer", thisProject: 80, other: 0, total: 80 },
+                  { name: "Vikram P.", role: "Full Stack Dev", thisProject: 45, other: 60, total: 105 },
+                  { name: "Meera J.", role: "QA Engineer", thisProject: 10, other: 20, total: 30 },
+                ].map(r => {
+                  const over = r.total > 100;
+                  const bench = r.total < 50;
+                  return (
+                    <div key={r.name} className={`bg-white rounded-lg border p-3 ${over ? "border-red-300" : bench ? "border-green-200" : "border-slate-200"}`}>
+                      <div className="flex justify-between items-start mb-1.5">
+                        <div>
+                          <div className={`text-xs font-semibold ${over ? "text-red-700" : "text-slate-700"}`}>{r.name}</div>
+                          <div className="text-xs text-slate-400">{r.role}</div>
+                        </div>
+                        {over && <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">OA</span>}
+                        {bench && <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-medium">Bench</span>}
+                      </div>
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full flex">
+                          <div className="bg-indigo-500 h-full" style={{ width: `${Math.min(100, r.thisProject)}%` }} />
+                          <div className="bg-orange-400 h-full" style={{ width: `${Math.min(100 - r.thisProject, r.other)}%` }} />
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-1 text-xs text-slate-400">
+                        <span><span className="text-indigo-600">{r.thisProject}h</span> this · <span className="text-orange-500">{r.other}h</span> other</span>
+                        <span className={over ? "text-red-600 font-semibold" : ""}>{r.total}/80h cap</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-3 flex gap-4 text-xs text-amber-700">
+                <span>🟦 This project allocation</span>
+                <span>🟧 Other project allocation</span>
+                <span>OA = Over-Allocated · Bench = &lt;50% utilized</span>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
@@ -1147,6 +1297,93 @@ export default function ScopePage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* ══ CHANGE REQUESTS TAB ══ */}
+      {activeTab === "Change Requests" && (
+        <div className="space-y-4">
+          {/* Summary */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: "Total CRs", value: crs.length, color: "text-slate-800" },
+              { label: "Pending Approval", value: crs.filter(c => c.status === "Pending").length, color: "text-amber-600" },
+              { label: "Approved Cost Impact", value: `₹${crs.filter(c => c.status === "Approved").reduce((a, c) => a + c.impactCost, 0).toLocaleString("en-IN")}`, color: "text-indigo-700" },
+            ].map(s => (
+              <div key={s.label} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+                <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
+                <div className="text-xs text-slate-400 mt-1">{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add CR button */}
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-slate-700">Change Request Register</h3>
+            <button onClick={() => setShowAddCR(true)} className="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700">+ New CR</button>
+          </div>
+
+          {/* Add CR form */}
+          {showAddCR && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 space-y-3">
+              <input placeholder="CR Title" value={newCR.title} onChange={e => setNewCR(p => ({...p, title: e.target.value}))} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              <textarea placeholder="Description & justification" value={newCR.description} onChange={e => setNewCR(p => ({...p, description: e.target.value}))} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm h-20" />
+              <div className="grid grid-cols-3 gap-3">
+                <input placeholder="Timeline impact (e.g. +1 week)" value={newCR.impactTimeline} onChange={e => setNewCR(p => ({...p, impactTimeline: e.target.value}))} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input type="number" placeholder="Cost impact (₹)" value={newCR.impactCost || ""} onChange={e => setNewCR(p => ({...p, impactCost: Number(e.target.value)}))} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input placeholder="Requested by" value={newCR.requestedBy} onChange={e => setNewCR(p => ({...p, requestedBy: e.target.value}))} className="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => {
+                  if (!newCR.title) return;
+                  setCrs(p => [...p, { ...newCR, id: `CR-${String(p.length + 1).padStart(3, "0")}`, createdDate: new Date().toISOString().slice(0, 10), resolvedDate: "", approvedBy: "", linkedTaskId: newCR.linkedTaskId }]);
+                  setShowAddCR(false);
+                  setNewCR({ title: "", description: "", linkedTaskId: "", impactTimeline: "", impactCost: 0, requestedBy: "", status: "Pending" });
+                }} className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Submit CR</button>
+                <button onClick={() => setShowAddCR(false)} className="px-4 py-2 bg-white text-slate-600 text-sm rounded-lg border border-slate-200">Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {/* CR cards */}
+          <div className="space-y-3">
+            {crs.map(cr => {
+              const statusStyle = cr.status === "Approved" ? "bg-green-100 text-green-700" : cr.status === "Rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700";
+              return (
+                <div key={cr.id} className={`bg-white rounded-xl border shadow-sm overflow-hidden ${cr.status === "Pending" ? "border-amber-200" : ""}`}>
+                  <div className="px-5 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-xs font-mono text-slate-400">{cr.id}</span>
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${statusStyle}`}>{cr.status}</span>
+                          {cr.linkedTaskId && <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded">Linked: {cr.linkedTaskId}</span>}
+                        </div>
+                        <div className="font-semibold text-slate-800">{cr.title}</div>
+                        <div className="text-sm text-slate-500 mt-1">{cr.description}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-lg font-bold text-indigo-700">₹{cr.impactCost.toLocaleString("en-IN")}</div>
+                        <div className="text-xs text-slate-400">cost impact</div>
+                        <div className="text-xs text-amber-600 mt-0.5">{cr.impactTimeline}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
+                      <span>Requested by: <strong className="text-slate-600">{cr.requestedBy}</strong></span>
+                      <span>Raised: {cr.createdDate}</span>
+                      {cr.approvedBy && <span>{cr.status} by: <strong className="text-slate-600">{cr.approvedBy}</strong> · {cr.resolvedDate}</span>}
+                    </div>
+                    {cr.status === "Pending" && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                        <button onClick={() => setCrs(p => p.map(c => c.id === cr.id ? {...c, status: "Approved", approvedBy: "PM", resolvedDate: new Date().toISOString().slice(0, 10)} : c))} className="px-3 py-1.5 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700">✓ Approve</button>
+                        <button onClick={() => setCrs(p => p.map(c => c.id === cr.id ? {...c, status: "Rejected", approvedBy: "PM", resolvedDate: new Date().toISOString().slice(0, 10)} : c))} className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700">✗ Reject</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Stage = "Lead" | "Proposal" | "Negotiation" | "Won" | "Converted";
+
+type DeliveryHealth = {
+  health: "On Track" | "At Risk" | "Delayed";
+  milestoneDone: number;
+  milestoneTotal: number;
+  invoiceReceived: number;
+  invoiceTotal: number;
+};
 type DealSource = "CRM" | "Government RFP";
 type ProjectType = "Fixed Price" | "Time & Material" | "Bot Development" | "SaaS" | "Retainer" | "Milestone-Based";
 
@@ -369,6 +377,7 @@ export default function WonProjectsPage() {
   const [onboardSource, setOnboardSource] = useState<"CRM" | "Government RFP">("CRM");
   const [onboarding, setOnboarding] = useState(false);
   const [onboardDone, setOnboardDone] = useState(false);
+  const [deliveryHealthMap, setDeliveryHealthMap] = useState<Record<string, DeliveryHealth>>({});
 
   useEffect(() => {
     const saved = localStorage.getItem("pm_crm_projects");
@@ -377,6 +386,18 @@ export default function WonProjectsPage() {
       const overrides: Record<string, { stage: Stage; convertedDate?: string; convertedSource?: string }> = JSON.parse(saved);
       setProjects(INITIAL_PROJECTS.map((p) => overrides[p.id] ? { ...p, ...overrides[p.id] } : p));
     } catch { /* ignore */ }
+
+    const healthRaw = localStorage.getItem("pm_delivery_health");
+    if (healthRaw) {
+      try { setDeliveryHealthMap(JSON.parse(healthRaw)); } catch { /* ignore */ }
+    } else {
+      // Default health for pre-existing converted project WP-003
+      const defaultHealth: Record<string, DeliveryHealth> = {
+        "WP-003": { health: "On Track", milestoneDone: 2, milestoneTotal: 3, invoiceReceived: 720000, invoiceTotal: 1200000 }
+      };
+      setDeliveryHealthMap(defaultHealth);
+      localStorage.setItem("pm_delivery_health", JSON.stringify(defaultHealth));
+    }
   }, []);
 
   const saveOverrides = (updated: CRMProject[]) => {
@@ -448,6 +469,16 @@ export default function WonProjectsPage() {
       agreementRef: p.agreementRef,
       wbsItems: p.wbsItems,
     }));
+
+    const currentHealth = JSON.parse(localStorage.getItem("pm_delivery_health") || "{}");
+    currentHealth[p.id] = {
+      health: "On Track",
+      milestoneDone: 0,
+      milestoneTotal: p.milestones.length,
+      invoiceReceived: 0,
+      invoiceTotal: p.totalCost,
+    };
+    localStorage.setItem("pm_delivery_health", JSON.stringify(currentHealth));
 
     // Mark as converted
     setTimeout(() => {
@@ -588,6 +619,41 @@ export default function WonProjectsPage() {
                   <div className="text-xs text-slate-400">via {proj.salesRep}</div>
                 </div>
               </div>
+
+              {/* Delivery health strip — Converted projects only */}
+              {proj.stage === "Converted" && deliveryHealthMap[proj.id] && (() => {
+                const dh = deliveryHealthMap[proj.id];
+                const milestonePct = dh.milestoneTotal > 0 ? Math.round(dh.milestoneDone / dh.milestoneTotal * 100) : 0;
+                const invoicePct = dh.invoiceTotal > 0 ? Math.round(dh.invoiceReceived / dh.invoiceTotal * 100) : 0;
+                const healthStyle = dh.health === "On Track" ? "bg-green-100 text-green-700 border-green-200" : dh.health === "At Risk" ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-red-100 text-red-700 border-red-200";
+                return (
+                  <div className="mx-6 mb-4 bg-slate-50 rounded-xl border border-slate-100 px-5 py-3 grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Delivery Health</div>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${healthStyle}`}>
+                        <span className={`w-2 h-2 rounded-full ${dh.health === "On Track" ? "bg-green-500" : dh.health === "At Risk" ? "bg-amber-500" : "bg-red-500"}`} />
+                        {dh.health}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Milestones</div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${milestonePct}%` }} />
+                        </div>
+                        <span className="text-xs font-medium text-slate-700">{dh.milestoneDone}/{dh.milestoneTotal} · {milestonePct}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-slate-400 mb-1">Invoices Received</div>
+                      <div className="text-sm font-semibold text-slate-800">₹{(dh.invoiceReceived/100000).toFixed(1)}L <span className="text-slate-400 font-normal text-xs">of ₹{(dh.invoiceTotal/100000).toFixed(1)}L</span></div>
+                      <div className="w-full h-1.5 bg-slate-200 rounded-full mt-1 overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${invoicePct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Action bar */}
               <div className="px-6 pb-5 flex items-center gap-2 border-t border-slate-50 pt-3 flex-wrap">

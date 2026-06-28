@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProjectBanner from "../_components/ProjectBanner";
+import CRMBadge from "../_components/CRMBadge";
 
 type BoardType = "Scrum" | "Kanban" | "Waterfall";
 type TaskType = "Task" | "Epic" | "Bug" | "Story" | "Branch Bug" | "Sub-Task" | "R&D";
@@ -267,7 +268,7 @@ export default function BoardPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-4"><ProjectBanner /></div>
+      <div className="px-6 pt-4 flex items-center gap-3 flex-wrap"><ProjectBanner /><CRMBadge /></div>
 
       {/* Header */}
       <div className="px-6 py-3 bg-white border-b border-slate-200 mt-3">

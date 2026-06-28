@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProjectBanner from "../_components/ProjectBanner";
+import CRMBadge from "../_components/CRMBadge";
 
 type TimeEntry = {
   id: string; taskId: string; taskTitle: string; taskType: string;
@@ -210,7 +211,7 @@ export default function TrackingPage() {
 
   return (
     <div className="p-6 space-y-4">
-      <ProjectBanner />
+      <div className="flex items-center gap-3 flex-wrap"><ProjectBanner /><CRMBadge /></div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Time Tracking</h1>
